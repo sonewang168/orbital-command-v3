@@ -570,6 +570,187 @@ async function fetchWeather(lat, lon) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// SpaceX 發射追蹤
+// ═══════════════════════════════════════════════════════════════════════════
+async function fetchSpaceXLaunches() {
+    try {
+        const res = await fetch('https://api.spacexdata.com/v5/launches/upcoming');
+        const data = await res.json();
+        
+        return data.slice(0, 5).map(launch => ({
+            name: launch.name,
+            date: launch.date_utc,
+            dateLocal: new Date(launch.date_utc).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+            rocket: launch.rocket,
+            details: launch.details || '詳情待公布',
+            upcoming: true
+        }));
+    } catch (e) {
+        console.error('SpaceX API 錯誤:', e.message);
+        return [];
+    }
+}
+
+// 取得最近一次發射
+async function fetchNextSpaceXLaunch() {
+    try {
+        const res = await fetch('https://api.spacexdata.com/v5/launches/next');
+        const data = await res.json();
+        
+        const launchDate = new Date(data.date_utc);
+        const now = new Date();
+        const diff = launchDate - now;
+        
+        let countdown = '';
+        if (diff > 0) {
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            countdown = `${days}天 ${hours}時 ${mins}分`;
+        }
+        
+        return {
+            name: data.name,
+            date: data.date_utc,
+            dateLocal: launchDate.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+            countdown,
+            flightNumber: data.flight_number,
+            details: data.details || '詳情待公布'
+        };
+    } catch (e) {
+        console.error('SpaceX Next Launch API 錯誤:', e.message);
+        return null;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 月相計算
+// ═══════════════════════════════════════════════════════════════════════════
+function getMoonPhase(date = new Date()) {
+    // 計算月相 (0-29.53 天為一個週期)
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
+    // 使用簡化的月相計算公式
+    let c, e, jd, b;
+    
+    if (month < 3) {
+        c = year - 1;
+        e = month + 12;
+    } else {
+        c = year;
+        e = month;
+    }
+    
+    jd = Math.floor(365.25 * c) + Math.floor(30.6001 * (e + 1)) + day - 694039.09;
+    jd /= 29.53058867;
+    b = Math.floor(jd);
+    jd -= b;
+    const phase = Math.round(jd * 8);
+    
+    const phases = [
+        { name: '新月', icon: '🌑', english: 'New Moon', illumination: 0 },
+        { name: '眉月', icon: '🌒', english: 'Waxing Crescent', illumination: 12.5 },
+        { name: '上弦月', icon: '🌓', english: 'First Quarter', illumination: 25 },
+        { name: '盈凸月', icon: '🌔', english: 'Waxing Gibbous', illumination: 37.5 },
+        { name: '滿月', icon: '🌕', english: 'Full Moon', illumination: 50 },
+        { name: '虧凸月', icon: '🌖', english: 'Waning Gibbous', illumination: 62.5 },
+        { name: '下弦月', icon: '🌗', english: 'Last Quarter', illumination: 75 },
+        { name: '殘月', icon: '🌘', english: 'Waning Crescent', illumination: 87.5 }
+    ];
+    
+    const currentPhase = phases[phase % 8];
+    
+    // 計算下一個滿月
+    const daysUntilFull = ((4 - phase + 8) % 8) * 3.69;
+    const nextFullMoon = new Date(date.getTime() + daysUntilFull * 24 * 60 * 60 * 1000);
+    
+    // 計算下一個新月
+    const daysUntilNew = ((8 - phase) % 8) * 3.69;
+    const nextNewMoon = new Date(date.getTime() + daysUntilNew * 24 * 60 * 60 * 1000);
+    
+    return {
+        phase: currentPhase.name,
+        icon: currentPhase.icon,
+        english: currentPhase.english,
+        illumination: Math.round(50 - Math.abs(50 - (phase * 12.5))),
+        age: Math.round(jd * 29.53),
+        nextFullMoon: nextFullMoon.toLocaleDateString('zh-TW'),
+        nextNewMoon: nextNewMoon.toLocaleDateString('zh-TW'),
+        isGoodForViewing: phase >= 5 || phase <= 1 // 新月前後適合觀星
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 流星雨預報
+// ═══════════════════════════════════════════════════════════════════════════
+function getMeteorShowers() {
+    const showers = [
+        { name: '象限儀座流星雨', english: 'Quadrantids', peak: '01-03', end: '01-04', rate: 120, parent: '小行星 2003 EH1' },
+        { name: '天琴座流星雨', english: 'Lyrids', peak: '04-22', end: '04-23', rate: 20, parent: '撒切爾彗星' },
+        { name: '寶瓶座η流星雨', english: 'Eta Aquariids', peak: '05-06', end: '05-07', rate: 50, parent: '哈雷彗星' },
+        { name: '寶瓶座δ南流星雨', english: 'Delta Aquariids', peak: '07-30', end: '07-31', rate: 25, parent: '乾達彗星' },
+        { name: '英仙座流星雨', english: 'Perseids', peak: '08-12', end: '08-13', rate: 100, parent: '斯威夫特-塔特爾彗星' },
+        { name: '天龍座流星雨', english: 'Draconids', peak: '10-08', end: '10-09', rate: 10, parent: '賈科比尼-津納彗星' },
+        { name: '獵戶座流星雨', english: 'Orionids', peak: '10-21', end: '10-22', rate: 20, parent: '哈雷彗星' },
+        { name: '金牛座南流星雨', english: 'S. Taurids', peak: '11-05', end: '11-06', rate: 5, parent: '恩克彗星' },
+        { name: '獅子座流星雨', english: 'Leonids', peak: '11-17', end: '11-18', rate: 15, parent: '坦普爾-塔特爾彗星' },
+        { name: '雙子座流星雨', english: 'Geminids', peak: '12-14', end: '12-15', rate: 150, parent: '小行星 3200 法厄同' },
+        { name: '小熊座流星雨', english: 'Ursids', peak: '12-22', end: '12-23', rate: 10, parent: '塔特爾彗星' }
+    ];
+    
+    const now = new Date();
+    const year = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const currentDay = now.getDate();
+    const today = `${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+    
+    // 找出最接近的流星雨
+    let upcoming = [];
+    let active = null;
+    
+    for (const shower of showers) {
+        const peakParts = shower.peak.split('-');
+        const peakMonth = parseInt(peakParts[0]);
+        const peakDay = parseInt(peakParts[1]);
+        
+        // 計算距離今天的天數
+        let peakDate = new Date(year, peakMonth - 1, peakDay);
+        if (peakDate < now) {
+            peakDate = new Date(year + 1, peakMonth - 1, peakDay);
+        }
+        
+        const daysUntil = Math.ceil((peakDate - now) / (1000 * 60 * 60 * 24));
+        
+        // 檢查是否正在活躍（極大期前後 3 天）
+        if (daysUntil >= -3 && daysUntil <= 3) {
+            active = { ...shower, daysUntil, peakDate: peakDate.toLocaleDateString('zh-TW') };
+        }
+        
+        if (daysUntil > 0) {
+            upcoming.push({ ...shower, daysUntil, peakDate: peakDate.toLocaleDateString('zh-TW') });
+        }
+    }
+    
+    // 排序取最近 3 個
+    upcoming.sort((a, b) => a.daysUntil - b.daysUntil);
+    upcoming = upcoming.slice(0, 3);
+    
+    // 取得月相判斷觀測條件
+    const moon = getMoonPhase();
+    const viewingCondition = moon.isGoodForViewing ? '極佳（少月光干擾）' : '一般（有月光干擾）';
+    
+    return {
+        active,
+        upcoming,
+        viewingCondition,
+        moonPhase: moon.phase,
+        moonIcon: moon.icon
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 綜合太空氣象數據
 // ═══════════════════════════════════════════════════════════════════════════
 async function getSpaceWeather(forceRefresh = false) {
@@ -1039,6 +1220,37 @@ function formatMainMenu() {
                         ],
                         margin: 'md'
                     },
+                    // 第三排按鈕 - 新功能
+                    {
+                        type: 'box',
+                        layout: 'horizontal',
+                        contents: [
+                            {
+                                type: 'button',
+                                action: { type: 'message', label: '🛸 發射', text: 'spacex' },
+                                style: 'secondary',
+                                height: 'sm',
+                                flex: 1
+                            },
+                            {
+                                type: 'button',
+                                action: { type: 'message', label: '🌙 月相', text: '月相' },
+                                style: 'secondary',
+                                height: 'sm',
+                                flex: 1,
+                                margin: 'sm'
+                            },
+                            {
+                                type: 'button',
+                                action: { type: 'message', label: '☄️ 流星', text: '流星雨' },
+                                style: 'secondary',
+                                height: 'sm',
+                                flex: 1,
+                                margin: 'sm'
+                            }
+                        ],
+                        margin: 'md'
+                    },
                     { type: 'separator', margin: 'lg' },
                     // 快速資訊
                     {
@@ -1062,6 +1274,13 @@ function formatMainMenu() {
                             {
                                 type: 'text',
                                 text: '• 天氣 台北 / 天氣 東京',
+                                size: 'xs',
+                                color: '#aaaaaa',
+                                margin: 'sm'
+                            },
+                            {
+                                type: 'text',
+                                text: '• 發射 / 月相 / 流星雨',
                                 size: 'xs',
                                 color: '#aaaaaa',
                                 margin: 'sm'
@@ -1265,6 +1484,87 @@ async function handleTextMessage(event) {
             }
             await lineReply(replyToken, msg);
         }
+    }
+    // 🛸 SpaceX 發射
+    else if (text === 'spacex' || text === '發射' || text === '火箭') {
+        const next = await fetchNextSpaceXLaunch();
+        if (next) {
+            const msg = `🛸 SpaceX 下一次發射
+━━━━━━━━━━━━━━━━
+
+🚀 任務：${next.name}
+📅 時間：${next.dateLocal}
+⏱️ 倒數：${next.countdown || '計算中...'}
+🔢 航次：#${next.flightNumber}
+
+📝 ${next.details}
+
+━━━━━━━━━━━━━━━━
+💡 輸入「發射列表」查看更多`;
+            await lineReply(replyToken, msg);
+        } else {
+            await lineReply(replyToken, '❌ 無法取得 SpaceX 發射資訊');
+        }
+    }
+    else if (text === '發射列表' || text === 'spacex列表') {
+        const launches = await fetchSpaceXLaunches();
+        if (launches.length > 0) {
+            let msg = '🛸 SpaceX 即將發射\n━━━━━━━━━━━━━━━━\n\n';
+            for (const launch of launches) {
+                msg += `🚀 ${launch.name}\n`;
+                msg += `📅 ${launch.dateLocal}\n\n`;
+            }
+            await lineReply(replyToken, msg);
+        } else {
+            await lineReply(replyToken, '❌ 目前沒有即將發射的任務');
+        }
+    }
+    // 🌙 月相
+    else if (text === '月亮' || text === '月相' || text === 'moon') {
+        const moon = getMoonPhase();
+        const msg = `🌙 今日月相
+━━━━━━━━━━━━━━━━
+
+${moon.icon} ${moon.phase}
+🔤 ${moon.english}
+
+📊 亮面：${moon.illumination}%
+📆 月齡：${moon.age} 天
+
+🌕 下次滿月：${moon.nextFullMoon}
+🌑 下次新月：${moon.nextNewMoon}
+
+🔭 觀星條件：${moon.isGoodForViewing ? '極佳 ⭐' : '一般'}
+
+━━━━━━━━━━━━━━━━
+💡 新月前後最適合觀星`;
+        await lineReply(replyToken, msg);
+    }
+    // ☄️ 流星雨
+    else if (text === '流星' || text === '流星雨' || text === 'meteor') {
+        const meteors = getMeteorShowers();
+        let msg = '☄️ 流星雨預報\n━━━━━━━━━━━━━━━━\n\n';
+        
+        if (meteors.active) {
+            msg += `🔥 現正活躍！\n`;
+            msg += `⭐ ${meteors.active.name}\n`;
+            msg += `📅 極大期：${meteors.active.peakDate}\n`;
+            msg += `💫 每小時流星數：${meteors.active.rate} 顆\n`;
+            msg += `☄️ 母體：${meteors.active.parent}\n\n`;
+        }
+        
+        msg += `📅 即將到來：\n\n`;
+        for (const shower of meteors.upcoming) {
+            msg += `⭐ ${shower.name}\n`;
+            msg += `   📅 ${shower.peakDate}（${shower.daysUntil} 天後）\n`;
+            msg += `   💫 每小時 ${shower.rate} 顆\n\n`;
+        }
+        
+        msg += `━━━━━━━━━━━━━━━━\n`;
+        msg += `${meteors.moonIcon} 當前月相：${meteors.moonPhase}\n`;
+        msg += `🔭 觀測條件：${meteors.viewingCondition}`;
+        
+        await lineReply(replyToken, msg);
     }
     else if (text.startsWith('天氣')) {
         const city = text.replace('天氣', '').trim() || '台北';
@@ -1621,6 +1921,30 @@ app.get('/api/flares', async (req, res) => {
     res.json({ success: true, data: flares });
 });
 
+// SpaceX 發射
+app.get('/api/spacex', async (req, res) => {
+    const launches = await fetchSpaceXLaunches();
+    res.json({ success: true, data: launches });
+});
+
+// SpaceX 下一次發射
+app.get('/api/spacex/next', async (req, res) => {
+    const next = await fetchNextSpaceXLaunch();
+    res.json({ success: true, data: next });
+});
+
+// 月相
+app.get('/api/moon', (req, res) => {
+    const moon = getMoonPhase();
+    res.json({ success: true, data: moon });
+});
+
+// 流星雨
+app.get('/api/meteors', (req, res) => {
+    const meteors = getMeteorShowers();
+    res.json({ success: true, data: meteors });
+});
+
 // 歷史紀錄查詢
 app.get('/api/history/:type', async (req, res) => {
     if (!doc) {
@@ -1923,6 +2247,9 @@ async function start() {
         console.log('   GET  /api/weather           地面天氣');
         console.log('   GET  /api/cme               CME 事件');
         console.log('   GET  /api/flares            太陽閃焰');
+        console.log('   GET  /api/spacex            SpaceX 發射');
+        console.log('   GET  /api/moon              月相');
+        console.log('   GET  /api/meteors           流星雨');
         console.log('   GET  /api/history/:type     歷史紀錄');
         console.log('   GET  /api/stats/subscriptions 訂閱統計');
         console.log('   POST /webhook               LINE Webhook');
