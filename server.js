@@ -212,14 +212,43 @@ async function lineReply(replyToken, messages) {
     if (!LINE_CHANNEL_ACCESS_TOKEN) return false;
 
     try {
+        // 處理不同類型的訊息
         let msgArray;
         if (Array.isArray(messages)) {
+            // 已經是陣列
             msgArray = messages;
         } else if (typeof messages === 'object' && messages.type) {
+            // 單一訊息物件（如 Flex Message）
             msgArray = [messages];
         } else {
+            // 純文字
             msgArray = [{ type: 'text', text: String(messages) }];
         }
+        
+        const response = await fetch('https://api.line.me/v2/bot/message/reply', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
+            },
+            body: JSON.stringify({
+                replyToken,
+                messages: msgArray.slice(0, 5)
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            console.error('❌ [LINE] 回覆失敗:', response.status, errorData);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('❌ [LINE] 回覆錯誤:', error.message);
+        return false;
+    }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NOAA SWPC API
@@ -1162,21 +1191,38 @@ async function getSubscribersByType(type) {
 // LINE Webhook
 // ═══════════════════════════════════════════════════════════════════════════
 app.post('/webhook', async (req, res) => {
+    console.log('📨 [LINE] 收到 Webhook 請求');
+    
+    // 檢查 TOKEN 是否設定
+    if (!LINE_CHANNEL_ACCESS_TOKEN) {
+        console.error('❌ [LINE] LINE_CHANNEL_ACCESS_TOKEN 未設定！無法回覆訊息');
+        return res.status(200).send('OK (no token configured)');
+    }
+    
     // 驗證簽名
     const signature = req.headers['x-line-signature'];
     if (LINE_CHANNEL_SECRET && !validateLineSignature(req.rawBody, signature)) {
+        console.error('❌ [LINE] 簽名驗證失敗');
         return res.status(401).send('Invalid signature');
     }
 
     const events = req.body.events || [];
+    console.log(`📬 [LINE] 收到 ${events.length} 個事件`);
     
     for (const event of events) {
-        if (event.type === 'message' && event.message.type === 'text') {
-            await handleTextMessage(event);
-        } else if (event.type === 'follow') {
-            await handleFollow(event);
-        } else if (event.type === 'unfollow') {
-            await handleUnfollow(event);
+        try {
+            if (event.type === 'message' && event.message.type === 'text') {
+                console.log(`💬 [LINE] 用戶訊息: "${event.message.text}"`);
+                await handleTextMessage(event);
+            } else if (event.type === 'follow') {
+                console.log('👋 [LINE] 新用戶加入');
+                await handleFollow(event);
+            } else if (event.type === 'unfollow') {
+                console.log('👋 [LINE] 用戶離開');
+                await handleUnfollow(event);
+            }
+        } catch (error) {
+            console.error('❌ [LINE] 處理事件錯誤:', error.message);
         }
     }
 
@@ -1698,6 +1744,142 @@ app.get('/health', (req, res) => {
         lineBot: LINE_CHANNEL_ACCESS_TOKEN ? 'configured' : 'not configured',
         cache: cachedSpaceWeather ? 'valid' : 'empty'
     });
+});
+
+// LINE BOT 診斷頁面
+app.get('/line-status', (req, res) => {
+    const tokenSet = !!LINE_CHANNEL_ACCESS_TOKEN;
+    const secretSet = !!LINE_CHANNEL_SECRET;
+    const sheetsSet = !!doc;
+    
+    const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 LINE BOT 診斷</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a1a; color: #fff; padding: 40px 20px; min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 30px; color: #00f5ff; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(0,245,255,0.3); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .row:last-child { border-bottom: none; }
+        .label { color: rgba(255,255,255,0.7); }
+        .ok { color: #00ff88; font-weight: bold; }
+        .error { color: #ff3b3b; font-weight: bold; }
+        .warn { color: #ff9500; font-weight: bold; }
+        .help { background: linear-gradient(135deg, rgba(255,149,0,0.1), transparent); border-left: 4px solid #ff9500; padding: 20px; border-radius: 0 8px 8px 0; margin-top: 20px; }
+        .help.success { border-color: #00ff88; background: linear-gradient(135deg, rgba(0,255,136,0.1), transparent); }
+        .help h3 { margin-bottom: 10px; }
+        .help ol { padding-left: 20px; color: rgba(255,255,255,0.8); }
+        .help li { margin: 10px 0; }
+        code { background: rgba(0,245,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace; color: #00f5ff; }
+        .url-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; word-break: break-all; font-family: monospace; color: #00f5ff; margin-top: 10px; }
+        .btn { display: block; width: 100%; padding: 15px; background: linear-gradient(135deg, #00f5ff, #0080ff); border: none; border-radius: 8px; color: #000; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .result { margin-top: 15px; padding: 15px; border-radius: 8px; display: none; }
+        a { color: #00f5ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 LINE BOT 診斷</h1>
+        
+        <div class="card">
+            <div class="row">
+                <span class="label">📡 伺服器狀態</span>
+                <span class="ok">✅ 運行中</span>
+            </div>
+            <div class="row">
+                <span class="label">🔑 LINE Channel Token</span>
+                <span class="${tokenSet ? 'ok">✅ 已設定' : 'error">❌ 未設定'}</span>
+            </div>
+            <div class="row">
+                <span class="label">🔐 LINE Channel Secret</span>
+                <span class="${secretSet ? 'ok">✅ 已設定' : 'warn">⚠️ 未設定'}</span>
+            </div>
+            <div class="row">
+                <span class="label">📊 Google Sheets</span>
+                <span class="${sheetsSet ? 'ok">✅ 已連線' : 'warn">⚠️ 未設定'}</span>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3 style="margin-bottom: 15px; color: #00f5ff;">📌 Webhook URL</h3>
+            <p style="color: rgba(255,255,255,0.7); margin-bottom: 10px;">請將以下網址填入 LINE Developers Console：</p>
+            <div class="url-box" id="webhookUrl">載入中...</div>
+        </div>
+        
+        <button class="btn" onclick="testWebhook()">🧪 測試 Webhook 連線</button>
+        <div class="result" id="testResult"></div>
+
+        ${!tokenSet ? `
+        <div class="help">
+            <h3 style="color: #ff9500;">⚠️ LINE BOT 尚未設定</h3>
+            <p style="margin-bottom: 15px;">請依照以下步驟設定：</p>
+            <ol>
+                <li>前往 <a href="https://developers.line.biz/console/" target="_blank">LINE Developers Console</a></li>
+                <li>建立 Messaging API Channel</li>
+                <li>在 Messaging API 頁面，取得 <strong>Channel Access Token</strong>（點 Issue）</li>
+                <li>在 Basic settings 頁面，取得 <strong>Channel Secret</strong></li>
+                <li>在 Render Dashboard → 您的服務 → Environment<br>
+                    新增環境變數：<br>
+                    <code>LINE_CHANNEL_ACCESS_TOKEN</code> = 您的 Token<br>
+                    <code>LINE_CHANNEL_SECRET</code> = 您的 Secret
+                </li>
+                <li>儲存後會自動重新部署</li>
+                <li>部署完成後，回到 LINE Developers Console<br>
+                    Messaging API → Webhook URL 填入上方網址<br>
+                    開啟「Use webhook」</li>
+            </ol>
+        </div>
+        ` : `
+        <div class="help success">
+            <h3 style="color: #00ff88;">✅ LINE BOT 已設定</h3>
+            <p style="margin-bottom: 15px;">如果仍無法收到回應，請確認：</p>
+            <ol>
+                <li>Webhook URL 已正確填入 LINE Developers Console</li>
+                <li>「Use webhook」已開啟（綠色）</li>
+                <li>點擊 Verify 按鈕測試連線</li>
+                <li>加入 BOT 好友後，發送「訂閱」測試</li>
+            </ol>
+        </div>
+        `}
+    </div>
+    
+    <script>
+        document.getElementById('webhookUrl').textContent = window.location.origin + '/webhook';
+        
+        async function testWebhook() {
+            const r = document.getElementById('testResult');
+            r.style.display = 'block';
+            r.style.background = 'rgba(255,255,255,0.05)';
+            r.innerHTML = '⏳ 測試中...';
+            
+            try {
+                const res = await fetch('/webhook', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ events: [] })
+                });
+                
+                if (res.ok) {
+                    r.style.background = 'rgba(0,255,136,0.1)';
+                    r.innerHTML = '✅ Webhook 端點正常！';
+                } else {
+                    r.style.background = 'rgba(255,59,59,0.1)';
+                    r.innerHTML = '❌ 錯誤：' + res.status;
+                }
+            } catch (e) {
+                r.style.background = 'rgba(255,59,59,0.1)';
+                r.innerHTML = '❌ 連線失敗：' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>`;
+    res.send(html);
 });
 
 // 首頁
