@@ -1626,7 +1626,7 @@
                         document.getElementById('chance-iceland').textContent = data.aurora.iceland + '%';
                         document.getElementById('chance-norway').textContent = data.aurora.norway + '%';
                         document.getElementById('chance-finland').textContent = data.aurora.finland + '%';
-                        document.getElementById('chance-japan').textContent = data.aurora.japan + '%';
+                        document.getElementById('chance-japan').textContent = (data.aurora.hokkaido || data.aurora.japan || 10) + '%';
                     }
 
                     // 地磁警報
