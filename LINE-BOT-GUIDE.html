@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 LINE BOT 操作指南 - ORBITAL COMMAND</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --line-green: #06C755;
+            --line-dark: #1a1a2e;
+            --bg-dark: #0a0a1a;
+            --cyan: #00f5ff;
+            --purple: #a855f7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg-dark);
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--line-green), #00a550);
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        /* Main */
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            color: var(--cyan);
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 245, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h3 {
+            font-size: 18px;
+            margin: 25px 0 15px;
+            color: #fff;
+        }
+
+        p {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 15px;
+        }
+
+        /* 流程圖 */
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            background: rgba(0, 245, 255, 0.1);
+            border: 2px solid var(--cyan);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .flow-step-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .flow-step-text {
+            font-size: 14px;
+            color: var(--cyan);
+        }
+
+        .flow-arrow {
+            font-size: 30px;
+            color: var(--cyan);
+        }
+
+        /* LINE 聊天模擬 */
+        .chat-container {
+            background: #7494A5;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 400px;
+            margin: 30px auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+
+        .chat-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .chat-name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .chat-status {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.user {
+            background: var(--line-green);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot {
+            background: #fff;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.bot pre {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin: 0;
+            color: #333;
+        }
+
+        /* Flex Message 模擬 */
+        .flex-message {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            max-width: 280px;
+            align-self: flex-start;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .flex-header {
+            background: var(--line-dark);
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .flex-header-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .flex-header-title {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .flex-body {
+            padding: 15px;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .flex-row:last-child {
+            border-bottom: none;
+        }
+
+        .flex-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .flex-btn {
+            background: var(--line-green);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .flex-btn.secondary {
+            background: #eee;
+            color: #333;
+        }
+
+        .flex-footer {
+            padding: 10px 15px 15px;
+        }
+
+        .flex-footer-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: var(--line-green);
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        /* 指令表格 */
+        .command-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .command-table th,
+        .command-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .command-table th {
+            background: rgba(0, 245, 255, 0.1);
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .command-table td {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .cmd {
+            font-family: monospace;
+            background: rgba(0, 245, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 4px;
+            color: var(--cyan);
+            font-size: 14px;
+        }
+
+        /* 步驟卡片 */
+        .step-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0, 245, 255, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            color: #000;
+            border-radius: 50%;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 提示框 */
+        .tip-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), transparent);
+            border-left: 4px solid #00ff88;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .tip-box.warning {
+            background: linear-gradient(135deg, rgba(255, 149, 0, 0.1), transparent);
+            border-left-color: #ff9500;
+        }
+
+        .tip-icon {
+            margin-right: 8px;
+        }
+
+        /* 推播時間選擇器模擬 */
+        .time-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .time-btn {
+            padding: 12px 24px;
+            background: rgba(0, 245, 255, 0.1);
+            border: 2px solid var(--cyan);
+            border-radius: 8px;
+            color: var(--cyan);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .time-btn:hover, .time-btn.selected {
+            background: var(--cyan);
+            color: #000;
+        }
+
+        /* 功能卡片網格 */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--cyan);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .feature-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--cyan);
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* 警報類型 */
+        .alert-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .alert-type {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid var(--cyan);
+        }
+
+        .alert-type.aurora {
+            border-left-color: #00ff88;
+        }
+
+        .alert-type.flare {
+            border-left-color: #ff3b3b;
+        }
+
+        .alert-type.cme {
+            border-left-color: #ff9500;
+        }
+
+        .alert-type-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .alert-type-icon {
+            font-size: 24px;
+        }
+
+        .alert-type-title {
+            font-weight: 700;
+        }
+
+        .alert-type-condition {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* 響應式 */
+        @media (max-width: 600px) {
+            .chat-container {
+                margin: 20px 10px;
+            }
+
+            .flow-container {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🤖</div>
+        <h1>LINE BOT 操作指南</h1>
+        <p class="subtitle">太空氣象指揮中心 ORBITAL COMMAND v3.0</p>
+    </header>
+
+    <main>
+        <!-- 總覽 -->
+        <h2>📋 功能總覽</h2>
+        
+        <p>LINE BOT 提供三大功能：<strong>即時查詢</strong>、<strong>定時推播</strong>、<strong>警報通知</strong></p>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <div class="feature-title">即時查詢</div>
+                <div class="feature-desc">輸入指令查詢<br>極光、太陽風、ISS</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <div class="feature-title">定時推播</div>
+                <div class="feature-desc">選擇時間<br>每天自動收報告</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🚨</div>
+                <div class="feature-title">警報通知</div>
+                <div class="feature-desc">極光、閃焰、CME<br>即時推播警報</div>
+            </div>
+        </div>
+
+        <!-- 操作流程 -->
+        <h2>🔄 操作流程</h2>
+
+        <div class="flow-container">
+            <div class="flow-step">
+                <div class="flow-step-icon">➕</div>
+                <div class="flow-step-text">加入好友</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="flow-step-icon">💬</div>
+                <div class="flow-step-text">輸入「訂閱」</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="flow-step-icon">🕐</div>
+                <div class="flow-step-text">選擇時間</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="flow-step-icon">✅</div>
+                <div class="flow-step-text">完成訂閱</div>
+            </div>
+        </div>
+
+        <!-- 定時推播設定 -->
+        <h2>⏰ 設定定時推播（每日報告）</h2>
+
+        <div class="step-card">
+            <div class="step-title">
+                <span class="step-number">1</span>
+                輸入「訂閱」開啟設定選單
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="chat-avatar">🛰️</div>
+                    <div>
+                        <div class="chat-name">ORBITAL COMMAND</div>
+                        <div class="chat-status">太空氣象指揮中心</div>
+                    </div>
+                </div>
+                <div class="chat-messages">
+                    <div class="message user">訂閱</div>
+                    
+                    <div class="flex-message">
+                        <div class="flex-header">
+                            <div class="flex-header-icon">🔔</div>
+                            <div class="flex-header-title">訂閱設定</div>
+                        </div>
+                        <div class="flex-body">
+                            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">選擇要訂閱的通知類型：</p>
+                            
+                            <div class="flex-row">
+                                <span class="flex-label">📅 每日報告</span>
+                                <div>
+                                    <button class="flex-btn">08:00</button>
+                                    <button class="flex-btn">20:00</button>
+                                </div>
+                            </div>
+                            <div class="flex-row">
+                                <span class="flex-label">🌌 極光警報 (Kp≥5)</span>
+                                <button class="flex-btn secondary">訂閱</button>
+                            </div>
+                            <div class="flex-row">
+                                <span class="flex-label">🔥 X級閃焰警報</span>
+                                <button class="flex-btn secondary">訂閱</button>
+                            </div>
+                            <div class="flex-row">
+                                <span class="flex-label">🌋 CME警報</span>
+                                <button class="flex-btn secondary">訂閱</button>
+                            </div>
+                        </div>
+                        <div class="flex-footer">
+                            <button class="flex-footer-btn">📋 查看我的訂閱</button>
+                            <button class="flex-footer-btn" style="color: #ff6b6b;">❌ 取消所有訂閱</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">
+                <span class="step-number">2</span>
+                點選推播時間按鈕
+            </div>
+            
+            <p>選擇您想要收到每日報告的時間：</p>
+            
+            <div class="time-selector">
+                <button class="time-btn selected">📅 08:00 早報</button>
+                <button class="time-btn">📅 20:00 晚報</button>
+            </div>
+            
+            <p style="font-size: 14px; color: rgba(255,255,255,0.6);">
+                💡 也可以直接輸入文字指令：<span class="cmd">訂閱每日報告 08:00</span>
+            </p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-title">
+                <span class="step-number">3</span>
+                收到訂閱確認
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="chat-avatar">🛰️</div>
+                    <div>
+                        <div class="chat-name">ORBITAL COMMAND</div>
+                        <div class="chat-status">太空氣象指揮中心</div>
+                    </div>
+                </div>
+                <div class="chat-messages">
+                    <div class="message user">訂閱每日報告 08:00</div>
+                    <div class="message bot">
+                        ✅ 訂閱成功<br><br>
+                        每天 08:00 將收到太空氣象報告
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <strong>提示：</strong>每天到了設定的時間，您會自動收到完整的太空氣象報告，包含 Kp 指數、極光機率、太陽風數據等。
+        </div>
+
+        <!-- 警報訂閱 -->
+        <h2>🚨 訂閱警報通知</h2>
+
+        <p>除了定時報告，您還可以訂閱<strong>即時警報</strong>。當太空天氣發生重大事件時，系統會自動推播通知。</p>
+
+        <div class="alert-types">
+            <div class="alert-type aurora">
+                <div class="alert-type-header">
+                    <span class="alert-type-icon">🌌</span>
+                    <span class="alert-type-title">極光警報</span>
+                </div>
+                <div class="alert-type-condition">
+                    觸發條件：Kp 指數 ≥ 5<br>
+                    指令：<span class="cmd">訂閱極光警報</span>
+                </div>
+            </div>
+            <div class="alert-type flare">
+                <div class="alert-type-header">
+                    <span class="alert-type-icon">🔥</span>
+                    <span class="alert-type-title">太陽閃焰警報</span>
+                </div>
+                <div class="alert-type-condition">
+                    觸發條件：X 級太陽閃焰<br>
+                    指令：<span class="cmd">訂閱閃焰警報</span>
+                </div>
+            </div>
+            <div class="alert-type cme">
+                <div class="alert-type-header">
+                    <span class="alert-type-icon">🌋</span>
+                    <span class="alert-type-title">CME 警報</span>
+                </div>
+                <div class="alert-type-condition">
+                    觸發條件：CME 朝向地球<br>
+                    指令：<span class="cmd">訂閱CME警報</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 查詢指令 -->
+        <h2>🔍 即時查詢指令</h2>
+
+        <table class="command-table">
+            <thead>
+                <tr>
+                    <th>指令</th>
+                    <th>說明</th>
+                    <th>回覆內容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="cmd">極光</span></td>
+                    <td>極光預報</td>
+                    <td>Kp 指數、各地可見機率</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">太陽風</span></td>
+                    <td>太陽風數據</td>
+                    <td>風速、密度、Bz、閃焰等級</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">ISS</span></td>
+                    <td>太空站位置</td>
+                    <td>經緯度、高度、速度、位置</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">CME</span></td>
+                    <td>日冕拋射</td>
+                    <td>近期 CME 事件、速度</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">太空氣象</span></td>
+                    <td>完整報告</td>
+                    <td>全部數據總覽</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">天氣 台北</span></td>
+                    <td>地面天氣</td>
+                    <td>溫度、濕度、風速</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 範例對話 -->
+        <h2>💬 對話範例</h2>
+
+        <h3>查詢極光</h3>
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-avatar">🛰️</div>
+                <div>
+                    <div class="chat-name">ORBITAL COMMAND</div>
+                    <div class="chat-status">太空氣象指揮中心</div>
+                </div>
+            </div>
+            <div class="chat-messages">
+                <div class="message user">極光</div>
+                <div class="message bot">
+                    <pre>🌌 極光預報
+━━━━━━━━━━━━━━━━
+
+🟢 Kp 地磁指數：2.67
+📊 地磁警報等級：G0
+
+🌍 各地可見機率：
+
+🇮🇸 冰島 雷克雅維克：75%
+🇳🇴 挪威 特羅姆瑟：70%
+🇫🇮 芬蘭 羅瓦涅米：65%
+🇨🇦 加拿大 黃刀鎮：60%
+🇺🇸 阿拉斯加：55%
+🇯🇵 日本 北海道：10%
+
+━━━━━━━━━━━━━━━━
+
+💡 輸入「訂閱極光」
+   可在 Kp≥5 時收到通知</pre>
+                </div>
+            </div>
+        </div>
+
+        <h3>查詢我的訂閱</h3>
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-avatar">🛰️</div>
+                <div>
+                    <div class="chat-name">ORBITAL COMMAND</div>
+                    <div class="chat-status">太空氣象指揮中心</div>
+                </div>
+            </div>
+            <div class="chat-messages">
+                <div class="message user">我的訂閱</div>
+                <div class="message bot">
+                    <pre>📋 您的訂閱清單
+━━━━━━━━━━━━━━━━
+
+✅ 每日太空氣象報告 (08:00)
+✅ 極光警報 (Kp≥5)
+✅ X級太陽閃焰警報
+
+輸入「取消所有訂閱」
+可停止所有通知</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 訂閱管理 -->
+        <h2>⚙️ 管理訂閱</h2>
+
+        <table class="command-table">
+            <thead>
+                <tr>
+                    <th>指令</th>
+                    <th>說明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="cmd">訂閱</span></td>
+                    <td>開啟訂閱設定選單（含按鈕）</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">訂閱每日報告 08:00</span></td>
+                    <td>訂閱早上 8 點報告</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">訂閱每日報告 20:00</span></td>
+                    <td>訂閱晚上 8 點報告</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">訂閱極光警報</span></td>
+                    <td>訂閱 Kp≥5 極光通知</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">訂閱閃焰警報</span></td>
+                    <td>訂閱 X 級閃焰通知</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">訂閱CME警報</span></td>
+                    <td>訂閱 CME 地球方向通知</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">我的訂閱</span></td>
+                    <td>查看目前所有訂閱</td>
+                </tr>
+                <tr>
+                    <td><span class="cmd">取消所有訂閱</span></td>
+                    <td>停止所有通知</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 常見問題 -->
+        <h2>❓ 常見問題</h2>
+
+        <div class="step-card">
+            <h3>Q: 為什麼沒收到定時報告？</h3>
+            <p>請確認：</p>
+            <ul style="color: rgba(255,255,255,0.7); padding-left: 20px;">
+                <li>已成功訂閱（輸入「我的訂閱」確認）</li>
+                <li>LINE BOT 伺服器正常運行</li>
+                <li>Render 免費方案可能會休眠，收到第一則訊息後會喚醒</li>
+            </ul>
+        </div>
+
+        <div class="step-card">
+            <h3>Q: 可以同時訂閱 08:00 和 20:00 嗎？</h3>
+            <p>目前每種類型只保留最後一次設定。如果需要兩個時間都收到，可以請開發者修改程式支援多時段。</p>
+        </div>
+
+        <div class="step-card">
+            <h3>Q: 如何修改推播時間？</h3>
+            <p>直接重新訂閱即可覆蓋。例如原本訂閱 08:00，想改成 20:00，只要輸入 <span class="cmd">訂閱每日報告 20:00</span></p>
+        </div>
+
+        <div class="tip-box warning">
+            <span class="tip-icon">⚠️</span>
+            <strong>注意：</strong>LINE BOT 需要部署到伺服器（如 Render）才能使用。純前端模式無法使用 LINE BOT 功能。
+        </div>
+
+        <!-- 快速開始 -->
+        <h2>🚀 快速開始</h2>
+
+        <div class="step-card" style="text-align: center; background: linear-gradient(135deg, rgba(6, 199, 85, 0.1), rgba(0, 245, 255, 0.1));">
+            <p style="font-size: 18px; margin-bottom: 20px;">掃描 QR Code 加入好友，馬上開始使用！</p>
+            <div style="font-size: 80px; margin: 30px 0;">📱</div>
+            <p style="color: rgba(255,255,255,0.6);">（請在 LINE Developers 取得您的 BOT QR Code）</p>
+        </div>
+
+    </main>
+
+    <footer style="background: #111; padding: 30px; text-align: center; color: rgba(255,255,255,0.5);">
+        <p>🛰️ ORBITAL COMMAND v3.0</p>
+        <p style="font-size: 12px; margin-top: 10px;">太空氣象指揮中心 © 2025</p>
+    </footer>
+</body>
+</html>
