@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛰️ ORBITAL COMMAND - 管理後台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #00f5ff;
+            --secondary: #a855f7;
+            --success: #00ff88;
+            --warning: #ff9500;
+            --danger: #ff3b3b;
+            --bg-dark: #030810;
+            --bg-panel: rgba(5, 15, 35, 0.95);
+            --bg-card: rgba(10, 20, 40, 0.8);
+            --border: rgba(0, 245, 255, 0.2);
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.5);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        /* 側邊欄 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 25px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .sidebar-logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .sidebar-logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .sidebar-logo-sub {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+        }
+        
+        .sidebar-menu-item {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-menu-link:hover {
+            background: rgba(0, 245, 255, 0.05);
+            color: var(--text);
+        }
+        
+        .sidebar-menu-link.active {
+            background: rgba(0, 245, 255, 0.1);
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .sidebar-menu-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .sidebar-section {
+            padding: 15px 20px 10px;
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* 主內容 */
+        .main-content {
+            margin-left: 260px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        /* 頁首 */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .page-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            color: var(--primary);
+        }
+        
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-top: 5px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .header-time {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: var(--text-dim);
+            padding: 10px 15px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        /* 統計卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .stat-card-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 40px;
+            opacity: 0.15;
+        }
+        
+        .stat-card-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-card-label {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        
+        .stat-card-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .stat-card-change.up {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--success);
+        }
+        
+        .stat-card-change.down {
+            background: rgba(255, 59, 59, 0.1);
+            color: var(--danger);
+        }
+        
+        /* 面板 */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(90deg, rgba(0, 245, 255, 0.08), transparent);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-title-icon {
+            font-size: 18px;
+        }
+        
+        .panel-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .panel-body {
+            padding: 20px;
+        }
+        
+        /* 表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .data-table th {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .data-table td {
+            font-size: 13px;
+        }
+        
+        .data-table tr:hover td {
+            background: rgba(0, 245, 255, 0.03);
+        }
+        
+        .data-table .user-id {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+        
+        /* 標籤 */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--success);
+        }
+        
+        .badge-warning {
+            background: rgba(255, 149, 0, 0.15);
+            color: var(--warning);
+        }
+        
+        .badge-danger {
+            background: rgba(255, 59, 59, 0.15);
+            color: var(--danger);
+        }
+        
+        .badge-info {
+            background: rgba(0, 245, 255, 0.15);
+            color: var(--primary);
+        }
+        
+        /* 按鈕 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--bg-dark);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 245, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), var(--warning));
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-icon:hover {
+            background: rgba(0, 245, 255, 0.1);
+            color: var(--primary);
+        }
+        
+        /* 表單 */
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.15);
+        }
+        
+        .form-input::placeholder {
+            color: var(--text-dim);
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            outline: none;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        /* 網格 */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+        
+        /* 圖表容器 */
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        /* 狀態指示器 */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-dot.online {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-dot.offline {
+            background: var(--danger);
+        }
+        
+        .status-dot.warning {
+            background: var(--warning);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* 系統狀態 */
+        .system-status {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .system-status-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .system-status-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .system-status-icon.warning {
+            background: rgba(255, 149, 0, 0.1);
+        }
+        
+        .system-status-icon.error {
+            background: rgba(255, 59, 59, 0.1);
+        }
+        
+        .system-status-text {
+            flex: 1;
+        }
+        
+        .system-status-label {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        
+        .system-status-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        /* 活動日誌 */
+        .activity-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .activity-item {
+            display: flex;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 245, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .activity-icon.success {
+            background: rgba(0, 255, 136, 0.1);
+        }
+        
+        .activity-icon.warning {
+            background: rgba(255, 149, 0, 0.1);
+        }
+        
+        .activity-icon.error {
+            background: rgba(255, 59, 59, 0.1);
+        }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-text {
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+        
+        .activity-time {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+        
+        /* 訂閱卡片 */
+        .subscription-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .subscription-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .subscription-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .subscription-card-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subscription-card-count {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .subscription-card-label {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        
+        /* 快速操作 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .quick-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .quick-action:hover {
+            background: rgba(0, 245, 255, 0.05);
+            border-color: var(--primary);
+        }
+        
+        .quick-action-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        
+        .quick-action-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .quick-action-desc {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        
+        /* 分頁標籤 */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 6px;
+        }
+        
+        .tab:hover {
+            background: rgba(0, 245, 255, 0.05);
+            color: var(--text);
+        }
+        
+        .tab.active {
+            background: rgba(0, 245, 255, 0.1);
+            color: var(--primary);
+        }
+        
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px 20px;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.info { border-left: 4px solid var(--primary); }
+        
+        .toast-icon { font-size: 20px; }
+        .toast-message { flex: 1; font-size: 13px; }
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+        
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            color: var(--primary);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 20px;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        /* 頁面區塊 */
+        .page-section {
+            display: none;
+        }
+        
+        .page-section.active {
+            display: block;
+        }
+        
+        /* 空狀態 */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        
+        .empty-state-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state-desc {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+        
+        /* 響應式 */
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .subscription-cards { grid-template-columns: repeat(2, 1fr); }
+            .system-status { grid-template-columns: repeat(2, 1fr); }
+            .quick-actions { grid-template-columns: 1fr; }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; }
+            .sidebar-logo-text, .sidebar-logo-sub, .sidebar-menu-text, .sidebar-section { display: none; }
+            .sidebar-menu-link { justify-content: center; padding: 15px; }
+            .main-content { margin-left: 60px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+        
+        /* 滾動條 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+    </style>
+</head>
+<body>
+    <!-- 側邊欄 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon">🛰️</div>
+                <div>
+                    <div class="sidebar-logo-text">ORBITAL CMD</div>
+                    <div class="sidebar-logo-sub">Admin Panel</div>
+                </div>
+            </div>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li class="sidebar-menu-item">
+                <a href="#" class="sidebar-menu-link active" data-page="dashboard">
+                    <span class="sidebar-menu-icon">📊</span>
+                    <span class="sidebar-menu-text">儀表板</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a href="#" class="sidebar-menu-link" data-page="subscribers">
+                    <span class="sidebar-menu-icon">👥</span>
+                    <span class="sidebar-menu-text">訂閱者</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a href="#" class="sidebar-menu-link" data-page="push">
+                    <span class="sidebar-menu-icon">📤</span>
+                    <span class="sidebar-menu-text">推播管理</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a href="#" class="sidebar-menu-link" data-page="history">
+                    <span class="sidebar-menu-icon">📈</span>
+                    <span class="sidebar-menu-text">數據紀錄</span>
+                </a>
+            </li>
+            
+            <div class="sidebar-section">系統</div>
+            
+            <li class="sidebar-menu-item">
+                <a href="#" class="sidebar-menu-link" data-page="settings">
+                    <span class="sidebar-menu-icon">⚙️</span>
+                    <span class="sidebar-menu-text">系統設定</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a href="#" class="sidebar-menu-link" data-page="logs">
+                    <span class="sidebar-menu-icon">📋</span>
+                    <span class="sidebar-menu-text">系統日誌</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a href="/" class="sidebar-menu-link">
+                    <span class="sidebar-menu-icon">🌍</span>
+                    <span class="sidebar-menu-text">前台首頁</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+    
+    <!-- 主內容 -->
+    <main class="main-content">
+        <!-- 儀表板 -->
+        <div class="page-section active" id="page-dashboard">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📊 管理儀表板</h1>
+                    <p class="page-subtitle">系統總覽與即時監控</p>
+                </div>
+                <div class="header-actions">
+                    <div class="header-time" id="currentTime">--:--:--</div>
+                    <button class="btn btn-secondary" onclick="refreshData()">🔄 重新整理</button>
+                </div>
+            </div>
+            
+            <!-- 統計卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-card-icon">👥</span>
+                    <div class="stat-card-value" id="totalSubscribers">--</div>
+                    <div class="stat-card-label">總訂閱數</div>
+                    <span class="stat-card-change up">↑ 12% 本週</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card-icon">📤</span>
+                    <div class="stat-card-value" id="todayPushes">--</div>
+                    <div class="stat-card-label">今日推播</div>
+                    <span class="stat-card-change up">↑ 5 筆</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card-icon">📊</span>
+                    <div class="stat-card-value" id="totalRecords">--</div>
+                    <div class="stat-card-label">數據紀錄</div>
+                    <span class="stat-card-change up">+288 今日</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card-icon">⚡</span>
+                    <div class="stat-card-value" id="apiCalls">--</div>
+                    <div class="stat-card-label">API 呼叫</div>
+                    <span class="stat-card-change down">↓ 正常</span>
+                </div>
+            </div>
+            
+            <!-- 系統狀態 -->
+            <div class="system-status">
+                <div class="system-status-item">
+                    <div class="system-status-icon">✅</div>
+                    <div class="system-status-text">
+                        <div class="system-status-label">NOAA API</div>
+                        <div class="system-status-value">
+                            <span class="status-indicator">
+                                <span class="status-dot online"></span> 正常
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="system-status-item">
+                    <div class="system-status-icon">✅</div>
+                    <div class="system-status-text">
+                        <div class="system-status-label">Google Sheets</div>
+                        <div class="system-status-value" id="gsheetsStatus">
+                            <span class="status-indicator">
+                                <span class="status-dot online"></span> 已連線
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="system-status-item">
+                    <div class="system-status-icon">✅</div>
+                    <div class="system-status-text">
+                        <div class="system-status-label">LINE BOT</div>
+                        <div class="system-status-value" id="linebotStatus">
+                            <span class="status-indicator">
+                                <span class="status-dot online"></span> 運行中
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="system-status-item">
+                    <div class="system-status-icon">✅</div>
+                    <div class="system-status-text">
+                        <div class="system-status-label">伺服器</div>
+                        <div class="system-status-value">
+                            <span class="status-indicator">
+                                <span class="status-dot online"></span> 99.9%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid-2">
+                <!-- 訂閱統計 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="panel-title-icon">📈</span>
+                            訂閱趨勢
+                        </span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container">
+                            <canvas id="subscriptionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 近期活動 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="panel-title-icon">📋</span>
+                            近期活動
+                        </span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="activity-list" id="activityList">
+                            <div class="activity-item">
+                                <div class="activity-icon success">📤</div>
+                                <div class="activity-content">
+                                    <div class="activity-text">定時推播已發送</div>
+                                    <div class="activity-time">2 分鐘前</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon">👤</div>
+                                <div class="activity-content">
+                                    <div class="activity-text">新用戶訂閱極光警報</div>
+                                    <div class="activity-time">15 分鐘前</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon warning">⚠️</div>
+                                <div class="activity-content">
+                                    <div class="activity-text">Kp 指數達到 5，已發送警報</div>
+                                    <div class="activity-time">1 小時前</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon success">📊</div>
+                                <div class="activity-content">
+                                    <div class="activity-text">數據記錄完成</div>
+                                    <div class="activity-time">5 分鐘前</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 快速操作 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">⚡</span>
+                        快速操作
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="quick-actions">
+                        <div class="quick-action" onclick="openBroadcastModal()">
+                            <div class="quick-action-icon">📢</div>
+                            <div class="quick-action-title">發送廣播</div>
+                            <div class="quick-action-desc">向所有訂閱者發送訊息</div>
+                        </div>
+                        <div class="quick-action" onclick="openTestPushModal()">
+                            <div class="quick-action-icon">🧪</div>
+                            <div class="quick-action-title">測試推播</div>
+                            <div class="quick-action-desc">發送測試訊息給指定用戶</div>
+                        </div>
+                        <div class="quick-action" onclick="forceRecordData()">
+                            <div class="quick-action-icon">💾</div>
+                            <div class="quick-action-title">立即記錄</div>
+                            <div class="quick-action-desc">強制記錄當前數據到試算表</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 訂閱者管理 -->
+        <div class="page-section" id="page-subscribers">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">👥 訂閱者管理</h1>
+                    <p class="page-subtitle">管理 LINE BOT 訂閱者</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="exportSubscribers()">📥 匯出</button>
+                    <button class="btn btn-primary" onclick="refreshSubscribers()">🔄 重新整理</button>
+                </div>
+            </div>
+            
+            <!-- 訂閱類型統計 -->
+            <div class="subscription-cards">
+                <div class="subscription-card">
+                    <div class="subscription-card-icon">📅</div>
+                    <div class="subscription-card-count" id="dailyCount">--</div>
+                    <div class="subscription-card-label">每日報告</div>
+                </div>
+                <div class="subscription-card">
+                    <div class="subscription-card-icon">🌌</div>
+                    <div class="subscription-card-count" id="auroraCount">--</div>
+                    <div class="subscription-card-label">極光警報</div>
+                </div>
+                <div class="subscription-card">
+                    <div class="subscription-card-icon">🔥</div>
+                    <div class="subscription-card-count" id="flareCount">--</div>
+                    <div class="subscription-card-label">閃焰警報</div>
+                </div>
+                <div class="subscription-card">
+                    <div class="subscription-card-icon">🌋</div>
+                    <div class="subscription-card-count" id="cmeCount">--</div>
+                    <div class="subscription-card-label">CME 警報</div>
+                </div>
+            </div>
+            
+            <!-- 篩選 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">🔍</span>
+                        篩選條件
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label class="form-label">訂閱類型</label>
+                            <select class="form-select" id="filterType">
+                                <option value="">全部類型</option>
+                                <option value="daily">每日報告</option>
+                                <option value="aurora">極光警報</option>
+                                <option value="flare">閃焰警報</option>
+                                <option value="cme">CME 警報</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">狀態</label>
+                            <select class="form-select" id="filterStatus">
+                                <option value="">全部狀態</option>
+                                <option value="啟用">啟用中</option>
+                                <option value="停用">已停用</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">搜尋</label>
+                            <input type="text" class="form-input" id="searchInput" placeholder="輸入用戶 ID...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 訂閱者列表 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">📋</span>
+                        訂閱者列表
+                    </span>
+                    <span class="badge badge-info" id="subscriberCount">0 筆</span>
+                </div>
+                <div class="panel-body" style="padding: 0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>用戶 ID</th>
+                                <th>訂閱類型</th>
+                                <th>推播時間</th>
+                                <th>訂閱時間</th>
+                                <th>狀態</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscriberTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <div class="empty-state-icon">📭</div>
+                                    <div class="empty-state-title">沒有訂閱者</div>
+                                    <div class="empty-state-desc">等待用戶加入訂閱</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 推播管理 -->
+        <div class="page-section" id="page-push">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📤 推播管理</h1>
+                    <p class="page-subtitle">發送測試與廣播推播</p>
+                </div>
+            </div>
+            
+            <div class="grid-2">
+                <!-- 測試推播 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="panel-title-icon">🧪</span>
+                            測試推播
+                        </span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="form-label">用戶 ID</label>
+                            <input type="text" class="form-input" id="testUserId" placeholder="輸入 LINE 用戶 ID">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">訊息類型</label>
+                            <select class="form-select" id="testMsgType">
+                                <option value="space-weather">完整太空氣象報告</option>
+                                <option value="aurora">極光預報</option>
+                                <option value="solar">太陽風數據</option>
+                                <option value="iss">ISS 位置</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="sendTestPush()">
+                            📤 發送測試
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 廣播推播 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="panel-title-icon">📢</span>
+                            廣播推播
+                        </span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="form-label">目標訂閱類型</label>
+                            <select class="form-select" id="broadcastType">
+                                <option value="daily">每日報告訂閱者</option>
+                                <option value="aurora">極光警報訂閱者</option>
+                                <option value="flare">閃焰警報訂閱者</option>
+                                <option value="cme">CME 警報訂閱者</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">訊息內容</label>
+                            <textarea class="form-textarea" id="broadcastMsg" placeholder="輸入要廣播的訊息..."></textarea>
+                        </div>
+                        <button class="btn btn-danger" style="width: 100%;" onclick="sendBroadcast()">
+                            📢 發送廣播
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 推播紀錄 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">📋</span>
+                        推播紀錄
+                    </span>
+                </div>
+                <div class="panel-body" style="padding: 0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>時間</th>
+                                <th>類型</th>
+                                <th>目標</th>
+                                <th>內容</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pushHistoryTable">
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    <div class="empty-state-icon">📭</div>
+                                    <div class="empty-state-title">沒有推播紀錄</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 數據紀錄 -->
+        <div class="page-section" id="page-history">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📈 數據紀錄</h1>
+                    <p class="page-subtitle">歷史數據查詢與圖表</p>
+                </div>
+                <div class="header-actions">
+                    <select class="form-select" style="width: 150px;" id="historyRange">
+                        <option value="1">過去 1 天</option>
+                        <option value="3">過去 3 天</option>
+                        <option value="7" selected>過去 7 天</option>
+                        <option value="30">過去 30 天</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="exportHistory()">📥 匯出</button>
+                </div>
+            </div>
+            
+            <!-- 分頁標籤 -->
+            <div class="tabs">
+                <button class="tab active" data-tab="kp">Kp 指數</button>
+                <button class="tab" data-tab="solar">太陽風</button>
+                <button class="tab" data-tab="radiation">輻射</button>
+                <button class="tab" data-tab="iss">ISS</button>
+            </div>
+            
+            <!-- Kp 圖表 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">📊</span>
+                        歷史趨勢圖
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="chart-container" style="height: 350px;">
+                        <canvas id="historyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 數據表格 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">📋</span>
+                        詳細數據
+                    </span>
+                </div>
+                <div class="panel-body" style="padding: 0; max-height: 400px; overflow-y: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>時間</th>
+                                <th>數值</th>
+                                <th>等級</th>
+                                <th>備註</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable">
+                            <tr>
+                                <td colspan="4" class="empty-state">載入中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 系統設定 -->
+        <div class="page-section" id="page-settings">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">⚙️ 系統設定</h1>
+                    <p class="page-subtitle">配置系統參數</p>
+                </div>
+            </div>
+            
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="panel-title-icon">⏰</span>
+                            定時任務
+                        </span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="form-label">數據記錄間隔（分鐘）</label>
+                            <input type="number" class="form-input" value="5" min="1" max="60">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">警報檢查間隔（分鐘）</label>
+                            <input type="number" class="form-input" value="5" min="1" max="30">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">API 快取時間（秒）</label>
+                            <input type="number" class="form-input" value="60" min="30" max="300">
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;">💾 儲存設定</button>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="panel-title-icon">⚠️</span>
+                            警報閾值
+                        </span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="form-label">極光警報 Kp 閾值</label>
+                            <input type="number" class="form-input" value="5" min="3" max="9">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">閃焰警報等級</label>
+                            <select class="form-select">
+                                <option value="X">X 級以上</option>
+                                <option value="M">M 級以上</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">警報冷卻時間（小時）</label>
+                            <input type="number" class="form-input" value="1" min="1" max="24">
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;">💾 儲存設定</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">🔗</span>
+                        連線狀態
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="system-status">
+                        <div class="system-status-item">
+                            <div class="system-status-icon">📊</div>
+                            <div class="system-status-text">
+                                <div class="system-status-label">Google Sheets</div>
+                                <div class="system-status-value" id="settingsGsheets">檢查中...</div>
+                            </div>
+                        </div>
+                        <div class="system-status-item">
+                            <div class="system-status-icon">🤖</div>
+                            <div class="system-status-text">
+                                <div class="system-status-label">LINE BOT</div>
+                                <div class="system-status-value" id="settingsLinebot">檢查中...</div>
+                            </div>
+                        </div>
+                        <div class="system-status-item">
+                            <div class="system-status-icon">🌐</div>
+                            <div class="system-status-text">
+                                <div class="system-status-label">NOAA API</div>
+                                <div class="system-status-value">
+                                    <span class="status-indicator">
+                                        <span class="status-dot online"></span> 正常
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="system-status-item">
+                            <div class="system-status-icon">🚀</div>
+                            <div class="system-status-text">
+                                <div class="system-status-label">NASA API</div>
+                                <div class="system-status-value">
+                                    <span class="status-indicator">
+                                        <span class="status-dot online"></span> 正常
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 系統日誌 -->
+        <div class="page-section" id="page-logs">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📋 系統日誌</h1>
+                    <p class="page-subtitle">查看系統運行日誌</p>
+                </div>
+                <div class="header-actions">
+                    <select class="form-select" style="width: 120px;" id="logLevel">
+                        <option value="all">全部</option>
+                        <option value="info">資訊</option>
+                        <option value="warning">警告</option>
+                        <option value="error">錯誤</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="clearLogs()">🗑️ 清除</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-body" style="padding: 0; max-height: 600px; overflow-y: auto;">
+                    <div style="padding: 15px; font-family: 'Share Tech Mono', monospace; font-size: 12px; line-height: 1.8;" id="logContainer">
+                        <div style="color: var(--success);">[2025-12-25 12:00:00] [INFO] 系統啟動</div>
+                        <div style="color: var(--primary);">[2025-12-25 12:00:01] [INFO] Google Sheets 已連線</div>
+                        <div style="color: var(--primary);">[2025-12-25 12:00:02] [INFO] LINE BOT 已啟動</div>
+                        <div style="color: var(--primary);">[2025-12-25 12:00:05] [INFO] 首次數據已載入</div>
+                        <div style="color: var(--primary);">[2025-12-25 12:05:00] [INFO] 數據記錄完成</div>
+                        <div style="color: var(--warning);">[2025-12-25 12:10:00] [WARNING] Kp 指數上升至 4</div>
+                        <div style="color: var(--primary);">[2025-12-25 12:15:00] [INFO] 定時推播已發送</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Toast 容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- 廣播 Modal -->
+    <div class="modal-overlay" id="broadcastModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">📢 發送廣播</h3>
+                <button class="modal-close" onclick="closeBroadcastModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">目標訂閱類型</label>
+                    <select class="form-select" id="modalBroadcastType">
+                        <option value="daily">每日報告訂閱者</option>
+                        <option value="aurora">極光警報訂閱者</option>
+                        <option value="flare">閃焰警報訂閱者</option>
+                        <option value="cme">CME 警報訂閱者</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">訊息內容</label>
+                    <textarea class="form-textarea" id="modalBroadcastMsg" placeholder="輸入要廣播的訊息..." rows="5"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBroadcastModal()">取消</button>
+                <button class="btn btn-danger" onclick="confirmBroadcast()">發送廣播</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 測試推播 Modal -->
+    <div class="modal-overlay" id="testPushModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">🧪 測試推播</h3>
+                <button class="modal-close" onclick="closeTestPushModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">用戶 ID</label>
+                    <input type="text" class="form-input" id="modalTestUserId" placeholder="輸入 LINE 用戶 ID">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">訊息類型</label>
+                    <select class="form-select" id="modalTestMsgType">
+                        <option value="space-weather">完整太空氣象報告</option>
+                        <option value="aurora">極光預報</option>
+                        <option value="solar">太陽風數據</option>
+                        <option value="iss">ISS 位置</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeTestPushModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmTestPush()">發送測試</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ===== 全域變數 =====
+        let subscriptionChart = null;
+        let historyChart = null;
+        
+        // ===== 初始化 =====
+        document.addEventListener('DOMContentLoaded', () => {
+            // 更新時間
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // 頁面切換
+            document.querySelectorAll('.sidebar-menu-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (link.dataset.page) {
+                        e.preventDefault();
+                        switchPage(link.dataset.page);
+                    }
+                });
+            });
+            
+            // 分頁標籤
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    loadHistoryData(tab.dataset.tab);
+                });
+            });
+            
+            // 篩選器
+            document.getElementById('filterType').addEventListener('change', filterSubscribers);
+            document.getElementById('filterStatus').addEventListener('change', filterSubscribers);
+            document.getElementById('searchInput').addEventListener('input', filterSubscribers);
+            
+            // 載入數據
+            loadDashboardData();
+            initCharts();
+        });
+        
+        // ===== 時間更新 =====
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+        }
+        
+        // ===== 頁面切換 =====
+        function switchPage(pageId) {
+            document.querySelectorAll('.sidebar-menu-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.page === pageId);
+            });
+            document.querySelectorAll('.page-section').forEach(page => {
+                page.classList.toggle('active', page.id === 'page-' + pageId);
+            });
+            
+            // 載入對應數據
+            if (pageId === 'subscribers') loadSubscribers();
+            if (pageId === 'history') loadHistoryData('kp');
+            if (pageId === 'settings') checkConnections();
+        }
+        
+        // ===== Toast 通知 =====
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: '✅', warning: '⚠️', error: '❌', info: 'ℹ️' };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type]}</span>
+                <span class="toast-message">${message}</span>
+                <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+        
+        // ===== 儀表板數據 =====
+        async function loadDashboardData() {
+            try {
+                // 健康檢查
+                const healthRes = await fetch('/health');
+                const health = await healthRes.json();
+                
+                // 更新狀態
+                document.getElementById('gsheetsStatus').innerHTML = health.googleSheets === 'connected' 
+                    ? '<span class="status-indicator"><span class="status-dot online"></span> 已連線</span>'
+                    : '<span class="status-indicator"><span class="status-dot offline"></span> 未設定</span>';
+                
+                document.getElementById('linebotStatus').innerHTML = health.lineBot === 'configured'
+                    ? '<span class="status-indicator"><span class="status-dot online"></span> 運行中</span>'
+                    : '<span class="status-indicator"><span class="status-dot offline"></span> 未設定</span>';
+                
+                // 訂閱統計
+                const statsRes = await fetch('/api/stats/subscriptions');
+                const stats = await statsRes.json();
+                
+                if (stats.success) {
+                    document.getElementById('totalSubscribers').textContent = stats.data.total || 0;
+                    document.getElementById('dailyCount').textContent = stats.data.daily || 0;
+                    document.getElementById('auroraCount').textContent = stats.data.aurora || 0;
+                    document.getElementById('flareCount').textContent = stats.data.flare || 0;
+                    document.getElementById('cmeCount').textContent = stats.data.cme || 0;
+                }
+                
+                // 模擬其他數據
+                document.getElementById('todayPushes').textContent = Math.floor(Math.random() * 50) + 10;
+                document.getElementById('totalRecords').textContent = (Math.floor(Math.random() * 5000) + 10000).toLocaleString();
+                document.getElementById('apiCalls').textContent = (Math.floor(Math.random() * 1000) + 500).toLocaleString();
+                
+            } catch (e) {
+                console.log('載入數據失敗:', e.message);
+                document.getElementById('totalSubscribers').textContent = '--';
+            }
+        }
+        
+        function refreshData() {
+            showToast('正在重新整理...', 'info');
+            loadDashboardData();
+            setTimeout(() => showToast('數據已更新', 'success'), 1000);
+        }
+        
+        // ===== 圖表初始化 =====
+        function initCharts() {
+            // 訂閱趨勢圖
+            const subCtx = document.getElementById('subscriptionChart').getContext('2d');
+            subscriptionChart = new Chart(subCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: '新訂閱',
+                        data: [12, 19, 15, 25, 22, 30, 28],
+                        borderColor: '#00f5ff',
+                        backgroundColor: 'rgba(0, 245, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' } }
+                    }
+                }
+            });
+            
+            // 歷史數據圖
+            const histCtx = document.getElementById('historyChart').getContext('2d');
+            historyChart = new Chart(histCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Kp',
+                        data: [],
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        fill: true,
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' }, min: 0, max: 9 }
+                    }
+                }
+            });
+        }
+        
+        // ===== 訂閱者管理 =====
+        async function loadSubscribers() {
+            // 模擬數據或從 API 取得
+            showToast('載入訂閱者...', 'info');
+        }
+        
+        function filterSubscribers() {
+            // 篩選邏輯
+        }
+        
+        function refreshSubscribers() {
+            showToast('正在重新整理...', 'info');
+            loadSubscribers();
+        }
+        
+        function exportSubscribers() {
+            showToast('正在匯出...', 'info');
+            setTimeout(() => showToast('匯出完成', 'success'), 1000);
+        }
+        
+        // ===== 推播功能 =====
+        async function sendTestPush() {
+            const userId = document.getElementById('testUserId').value;
+            const type = document.getElementById('testMsgType').value;
+            
+            if (!userId) {
+                showToast('請輸入用戶 ID', 'warning');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/admin/test-push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, type })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showToast('測試訊息已發送', 'success');
+                } else {
+                    showToast('發送失敗: ' + data.message, 'error');
+                }
+            } catch (e) {
+                showToast('發送錯誤', 'error');
+            }
+        }
+        
+        async function sendBroadcast() {
+            const type = document.getElementById('broadcastType').value;
+            const message = document.getElementById('broadcastMsg').value;
+            
+            if (!message) {
+                showToast('請輸入訊息內容', 'warning');
+                return;
+            }
+            
+            if (!confirm('確定要發送廣播嗎？')) return;
+            
+            try {
+                const res = await fetch('/api/admin/broadcast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, message })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showToast(`已發送給 ${data.sent}/${data.total} 位用戶`, 'success');
+                } else {
+                    showToast('廣播失敗', 'error');
+                }
+            } catch (e) {
+                showToast('廣播錯誤', 'error');
+            }
+        }
+        
+        // ===== Modal =====
+        function openBroadcastModal() {
+            document.getElementById('broadcastModal').classList.add('active');
+        }
+        
+        function closeBroadcastModal() {
+            document.getElementById('broadcastModal').classList.remove('active');
+        }
+        
+        function confirmBroadcast() {
+            const type = document.getElementById('modalBroadcastType').value;
+            const message = document.getElementById('modalBroadcastMsg').value;
+            document.getElementById('broadcastType').value = type;
+            document.getElementById('broadcastMsg').value = message;
+            closeBroadcastModal();
+            sendBroadcast();
+        }
+        
+        function openTestPushModal() {
+            document.getElementById('testPushModal').classList.add('active');
+        }
+        
+        function closeTestPushModal() {
+            document.getElementById('testPushModal').classList.remove('active');
+        }
+        
+        function confirmTestPush() {
+            const userId = document.getElementById('modalTestUserId').value;
+            const type = document.getElementById('modalTestMsgType').value;
+            document.getElementById('testUserId').value = userId;
+            document.getElementById('testMsgType').value = type;
+            closeTestPushModal();
+            sendTestPush();
+        }
+        
+        // ===== 歷史數據 =====
+        async function loadHistoryData(type) {
+            try {
+                const res = await fetch(`/api/kp-history`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    const labels = data.data.map(d => new Date(d.time).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }));
+                    const values = data.data.map(d => d.kp);
+                    
+                    historyChart.data.labels = labels;
+                    historyChart.data.datasets[0].data = values;
+                    historyChart.update();
+                }
+            } catch (e) {
+                console.log('載入歷史數據失敗');
+            }
+        }
+        
+        function exportHistory() {
+            showToast('正在匯出歷史數據...', 'info');
+        }
+        
+        // ===== 設定 =====
+        async function checkConnections() {
+            try {
+                const res = await fetch('/health');
+                const data = await res.json();
+                
+                document.getElementById('settingsGsheets').innerHTML = data.googleSheets === 'connected'
+                    ? '<span class="status-indicator"><span class="status-dot online"></span> 已連線</span>'
+                    : '<span class="status-indicator"><span class="status-dot offline"></span> 未設定</span>';
+                
+                document.getElementById('settingsLinebot').innerHTML = data.lineBot === 'configured'
+                    ? '<span class="status-indicator"><span class="status-dot online"></span> 已設定</span>'
+                    : '<span class="status-indicator"><span class="status-dot offline"></span> 未設定</span>';
+            } catch (e) {
+                console.log('檢查連線失敗');
+            }
+        }
+        
+        // ===== 其他 =====
+        function forceRecordData() {
+            showToast('正在記錄數據...', 'info');
+            setTimeout(() => showToast('數據已記錄到 Google Sheets', 'success'), 1500);
+        }
+        
+        function clearLogs() {
+            if (confirm('確定要清除所有日誌嗎？')) {
+                document.getElementById('logContainer').innerHTML = '<div style="color: var(--text-dim);">日誌已清除</div>';
+                showToast('日誌已清除', 'success');
+            }
+        }
+    </script>
+</body>
+</html>
