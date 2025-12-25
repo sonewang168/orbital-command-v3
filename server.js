@@ -212,7 +212,6 @@ async function lineReply(replyToken, messages) {
     if (!LINE_CHANNEL_ACCESS_TOKEN) return false;
 
     try {
-        // 處理不同類型的訊息
         let msgArray;
         if (Array.isArray(messages)) {
             msgArray = messages;
