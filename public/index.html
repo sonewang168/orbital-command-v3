@@ -544,9 +544,14 @@
             overflow: hidden;
             background: radial-gradient(ellipse at center, rgba(0, 80, 150, 0.1) 0%, transparent 70%);
             border: 1px solid var(--border-glow);
+            touch-action: none; /* 防止觸控時頁面滾動 */
         }
 
-        #globe-canvas { width: 100%; height: 100%; }
+        #globe-canvas { 
+            width: 100%; 
+            height: 100%; 
+            touch-action: none;
+        }
 
         .globe-overlay {
             position: absolute;
@@ -1356,7 +1361,12 @@
 
         // ==================== Three.js 地球 ====================
         function initGlobe() {
+            console.log('🌍 開始初始化地球...');
             const container = document.getElementById('globe-canvas');
+            if (!container) {
+                console.error('找不到 globe-canvas 元素');
+                return;
+            }
             const parent = container.parentElement;
             const width = parent.clientWidth;
             const height = parent.clientHeight;
@@ -1454,6 +1464,11 @@
             container.addEventListener('mousemove', onMouseMove);
             container.addEventListener('mouseup', onMouseUp);
             container.addEventListener('mouseleave', onMouseUp);
+            
+            // 觸控事件（手機/平板）
+            container.addEventListener('touchstart', onTouchStart, { passive: false });
+            container.addEventListener('touchmove', onTouchMove, { passive: false });
+            container.addEventListener('touchend', onTouchEnd);
             container.addEventListener('wheel', onMouseWheel);
             window.addEventListener('resize', onWindowResize);
 
@@ -1479,6 +1494,7 @@
             });
 
             animate();
+            console.log('✅ 地球初始化完成，滑鼠拖曳旋轉已啟用');
         }
 
         function onMouseDown(e) {
@@ -1504,6 +1520,55 @@
         }
 
         function onMouseUp() { isMouseDown = false; }
+
+        // 觸控事件處理（手機/平板）
+        let lastTouchDistance = 0;
+        
+        function onTouchStart(e) {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                isMouseDown = true;
+                mouseX = e.touches[0].clientX;
+                mouseY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                // 雙指縮放
+                lastTouchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+            }
+        }
+
+        function onTouchMove(e) {
+            e.preventDefault();
+            if (e.touches.length === 1 && isMouseDown) {
+                // 單指旋轉
+                const deltaX = e.touches[0].clientX - mouseX;
+                const deltaY = e.touches[0].clientY - mouseY;
+                targetRotationY += deltaX * 0.008;
+                targetRotationX += deltaY * 0.008;
+                mouseX = e.touches[0].clientX;
+                mouseY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                // 雙指縮放
+                const currentDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                if (lastTouchDistance > 0) {
+                    const delta = (lastTouchDistance - currentDistance) * 0.01;
+                    camera.position.z += delta;
+                    camera.position.z = Math.max(1.5, Math.min(5, camera.position.z));
+                    document.getElementById('zoom-level').textContent = (3 / camera.position.z).toFixed(1) + 'x';
+                }
+                lastTouchDistance = currentDistance;
+            }
+        }
+
+        function onTouchEnd() { 
+            isMouseDown = false; 
+            lastTouchDistance = 0;
+        }
 
         function onMouseWheel(e) {
             e.preventDefault();
