@@ -212,26 +212,15 @@ async function lineReply(replyToken, messages) {
     if (!LINE_CHANNEL_ACCESS_TOKEN) return false;
 
     try {
-        const msgArray = Array.isArray(messages) ? messages : [{ type: 'text', text: messages }];
-        
-        await fetch('https://api.line.me/v2/bot/message/reply', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`
-            },
-            body: JSON.stringify({
-                replyToken,
-                messages: msgArray.slice(0, 5)
-            })
-        });
-
-        return true;
-    } catch (error) {
-        console.error('LINE 回覆錯誤:', error.message);
-        return false;
-    }
-}
+        // 處理不同類型的訊息
+        let msgArray;
+        if (Array.isArray(messages)) {
+            msgArray = messages;
+        } else if (typeof messages === 'object' && messages.type) {
+            msgArray = [messages];
+        } else {
+            msgArray = [{ type: 'text', text: String(messages) }];
+        }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NOAA SWPC API
