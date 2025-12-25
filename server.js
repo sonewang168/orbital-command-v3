@@ -1457,7 +1457,112 @@ async function handleTextMessage(event) {
     const userId = event.source.userId;
     const replyToken = event.replyToken;
 
-    // 取得太空氣象數據
+    // ═══════════════════════════════════════════════════════════════
+    // 快速回應指令（不需要載入太空氣象數據）
+    // ═══════════════════════════════════════════════════════════════
+    
+    // 🛸 火箭發射
+    if (text === 'spacex' || text === '發射' || text === '火箭') {
+        const launches = getUpcomingLaunches();
+        const next = launches[0];
+        
+        const msg = `🛸 太空發射資訊
+━━━━━━━━━━━━━━━━
+
+🚀 ${next.name}
+🏢 ${next.provider}
+📅 ${next.dateLocal}
+${next.status}
+
+📝 ${next.details}
+
+━━━━━━━━━━━━━━━━
+🔗 即時資訊請查看：
+• spacex.com/launches
+• nextspaceflight.com
+
+💡 輸入「發射列表」查看更多`;
+        return await lineReply(replyToken, msg);
+    }
+    
+    if (text === '發射列表' || text === 'spacex列表') {
+        const launches = getUpcomingLaunches();
+        let msg = '🛸 太空發射計畫\n━━━━━━━━━━━━━━━━\n\n';
+        
+        for (const launch of launches) {
+            msg += `${launch.status} ${launch.name}\n`;
+            msg += `   🏢 ${launch.provider}\n`;
+            msg += `   📅 ${launch.dateLocal}\n\n`;
+        }
+        
+        msg += '━━━━━━━━━━━━━━━━\n';
+        msg += '🔗 即時發射資訊：\n';
+        msg += '• nextspaceflight.com';
+        return await lineReply(replyToken, msg);
+    }
+    
+    // 🌙 月相
+    if (text === '月亮' || text === '月相' || text === 'moon') {
+        const moon = getMoonPhase();
+        const msg = `🌙 今日月相
+━━━━━━━━━━━━━━━━
+
+${moon.icon} ${moon.phase}
+🔤 ${moon.english}
+
+📊 亮面：${moon.illumination}%
+📆 月齡：${moon.age} 天
+
+🌕 下次滿月：${moon.nextFullMoon}
+🌑 下次新月：${moon.nextNewMoon}
+
+🔭 觀星條件：${moon.isGoodForViewing ? '極佳 ⭐' : '一般'}
+
+━━━━━━━━━━━━━━━━
+💡 新月前後最適合觀星`;
+        return await lineReply(replyToken, msg);
+    }
+    
+    // ☄️ 流星雨
+    if (text === '流星' || text === '流星雨' || text === 'meteor') {
+        const meteors = getMeteorShowers();
+        let msg = '☄️ 流星雨預報\n━━━━━━━━━━━━━━━━\n\n';
+        
+        if (meteors.active) {
+            msg += `🔥 現正活躍！\n`;
+            msg += `⭐ ${meteors.active.name}\n`;
+            msg += `📅 極大期：${meteors.active.peakDate}\n`;
+            msg += `💫 每小時流星數：${meteors.active.rate} 顆\n`;
+            msg += `☄️ 母體：${meteors.active.parent}\n\n`;
+        }
+        
+        msg += `📅 即將到來：\n\n`;
+        for (const shower of meteors.upcoming) {
+            msg += `⭐ ${shower.name}\n`;
+            msg += `   📅 ${shower.peakDate}（${shower.daysUntil} 天後）\n`;
+            msg += `   💫 每小時 ${shower.rate} 顆\n\n`;
+        }
+        
+        msg += `━━━━━━━━━━━━━━━━\n`;
+        msg += `${meteors.moonIcon} 當前月相：${meteors.moonPhase}\n`;
+        msg += `🔭 觀測條件：${meteors.viewingCondition}`;
+        
+        return await lineReply(replyToken, msg);
+    }
+    
+    // 訂閱選單
+    if (text === '訂閱' || text === '設定' || text === '通知') {
+        return await lineReply(replyToken, formatSubscriptionMenu());
+    }
+    
+    // 主選單
+    if (text === '選單' || text === '主選單' || text === 'menu' || text === '幫助' || text === 'help') {
+        return await lineReply(replyToken, formatMainMenu());
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 需要太空氣象數據的指令
+    // ═══════════════════════════════════════════════════════════════
     const spaceWeather = await getSpaceWeather();
 
     // 指令判斷
@@ -1487,93 +1592,6 @@ async function handleTextMessage(event) {
             }
             await lineReply(replyToken, msg);
         }
-    }
-    // 🛸 火箭發射
-    else if (text === 'spacex' || text === '發射' || text === '火箭') {
-        const launches = getUpcomingLaunches();
-        const next = launches[0];
-        
-        const msg = `🛸 太空發射資訊
-━━━━━━━━━━━━━━━━
-
-🚀 ${next.name}
-🏢 ${next.provider}
-📅 ${next.dateLocal}
-${next.status}
-
-📝 ${next.details}
-
-━━━━━━━━━━━━━━━━
-🔗 即時資訊請查看：
-• spacex.com/launches
-• nasa.gov/launches
-• nextspaceflight.com
-
-💡 輸入「發射列表」查看更多`;
-        await lineReply(replyToken, msg);
-    }
-    else if (text === '發射列表' || text === 'spacex列表') {
-        const launches = getUpcomingLaunches();
-        let msg = '🛸 太空發射計畫\n━━━━━━━━━━━━━━━━\n\n';
-        
-        for (const launch of launches) {
-            msg += `${launch.status} ${launch.name}\n`;
-            msg += `   🏢 ${launch.provider}\n`;
-            msg += `   📅 ${launch.dateLocal}\n\n`;
-        }
-        
-        msg += '━━━━━━━━━━━━━━━━\n';
-        msg += '🔗 即時發射資訊：\n';
-        msg += '• nextspaceflight.com\n';
-        msg += '• spacex.com/launches';
-        await lineReply(replyToken, msg);
-    }
-    // 🌙 月相
-    else if (text === '月亮' || text === '月相' || text === 'moon') {
-        const moon = getMoonPhase();
-        const msg = `🌙 今日月相
-━━━━━━━━━━━━━━━━
-
-${moon.icon} ${moon.phase}
-🔤 ${moon.english}
-
-📊 亮面：${moon.illumination}%
-📆 月齡：${moon.age} 天
-
-🌕 下次滿月：${moon.nextFullMoon}
-🌑 下次新月：${moon.nextNewMoon}
-
-🔭 觀星條件：${moon.isGoodForViewing ? '極佳 ⭐' : '一般'}
-
-━━━━━━━━━━━━━━━━
-💡 新月前後最適合觀星`;
-        await lineReply(replyToken, msg);
-    }
-    // ☄️ 流星雨
-    else if (text === '流星' || text === '流星雨' || text === 'meteor') {
-        const meteors = getMeteorShowers();
-        let msg = '☄️ 流星雨預報\n━━━━━━━━━━━━━━━━\n\n';
-        
-        if (meteors.active) {
-            msg += `🔥 現正活躍！\n`;
-            msg += `⭐ ${meteors.active.name}\n`;
-            msg += `📅 極大期：${meteors.active.peakDate}\n`;
-            msg += `💫 每小時流星數：${meteors.active.rate} 顆\n`;
-            msg += `☄️ 母體：${meteors.active.parent}\n\n`;
-        }
-        
-        msg += `📅 即將到來：\n\n`;
-        for (const shower of meteors.upcoming) {
-            msg += `⭐ ${shower.name}\n`;
-            msg += `   📅 ${shower.peakDate}（${shower.daysUntil} 天後）\n`;
-            msg += `   💫 每小時 ${shower.rate} 顆\n\n`;
-        }
-        
-        msg += `━━━━━━━━━━━━━━━━\n`;
-        msg += `${meteors.moonIcon} 當前月相：${meteors.moonPhase}\n`;
-        msg += `🔭 觀測條件：${meteors.viewingCondition}`;
-        
-        await lineReply(replyToken, msg);
     }
     else if (text.startsWith('天氣')) {
         const city = text.replace('天氣', '').trim() || '台北';
@@ -1610,9 +1628,6 @@ ${weather.icon} ${weather.description}
             await lineReply(replyToken, '❌ 無法取得天氣資料');
         }
     }
-    else if (text === '訂閱' || text === '設定' || text === '通知') {
-        await lineReply(replyToken, formatSubscriptionMenu());
-    }
     else if (text.startsWith('訂閱每日報告')) {
         const time = text.includes('08:00') ? '08:00' : text.includes('20:00') ? '20:00' : '08:00';
         const result = await addSubscription(userId, 'daily', '每日太空氣象報告', time);
@@ -1648,9 +1663,6 @@ ${weather.icon} ${weather.description}
     else if (text === '取消所有訂閱' || text === '取消訂閱') {
         await removeSubscription(userId);
         await lineReply(replyToken, '✅ 已取消所有訂閱\n\n如需重新訂閱，請輸入「訂閱」');
-    }
-    else if (text === '選單' || text === '主選單' || text === 'menu' || text === '幫助' || text === 'help') {
-        await lineReply(replyToken, formatMainMenu());
     }
     else {
         // 預設回覆主選單
