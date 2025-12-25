@@ -1541,14 +1541,23 @@
 
         function onTouchMove(e) {
             e.preventDefault();
-            if (e.touches.length === 1 && isMouseDown) {
+            if (e.touches.length === 1) {
+                // 更新座標顯示
+                const rect = e.target.getBoundingClientRect();
+                const x = ((e.touches[0].clientX - rect.left) / rect.width) * 2 - 1;
+                const y = -((e.touches[0].clientY - rect.top) / rect.height) * 2 + 1;
+                document.getElementById('mouse-lat').textContent = (y * 90).toFixed(2) + '°';
+                document.getElementById('mouse-lon').textContent = (x * 180).toFixed(2) + '°';
+                
                 // 單指旋轉
-                const deltaX = e.touches[0].clientX - mouseX;
-                const deltaY = e.touches[0].clientY - mouseY;
-                targetRotationY += deltaX * 0.008;
-                targetRotationX += deltaY * 0.008;
-                mouseX = e.touches[0].clientX;
-                mouseY = e.touches[0].clientY;
+                if (isMouseDown) {
+                    const deltaX = e.touches[0].clientX - mouseX;
+                    const deltaY = e.touches[0].clientY - mouseY;
+                    targetRotationY += deltaX * 0.008;
+                    targetRotationX += deltaY * 0.008;
+                    mouseX = e.touches[0].clientX;
+                    mouseY = e.touches[0].clientY;
+                }
             } else if (e.touches.length === 2) {
                 // 雙指縮放
                 const currentDistance = Math.hypot(
