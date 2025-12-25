@@ -1610,11 +1610,6 @@ async function handleTextMessage(event) {
             await lineReply(replyToken, '❌ 目前沒有即將發射的任務\n\n🔗 請查看 spacex.com 獲取最新資訊');
         }
     }
-            await lineReply(replyToken, msg);
-        } else {
-            await lineReply(replyToken, '❌ 目前沒有即將發射的任務');
-        }
-    }
     // 🌙 月相
     else if (text === '月亮' || text === '月相' || text === 'moon') {
         const moon = getMoonPhase();
