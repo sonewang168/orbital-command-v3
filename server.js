@@ -602,6 +602,7 @@ async function getSpaceWeather(forceRefresh = false) {
             canada: Math.min(80, Math.round(kpValue * 15 + 10)),
             alaska: Math.min(75, Math.round(kpValue * 15 + 5)),
             hokkaido: Math.max(5, Math.round(kpValue * 15 - 30)),
+            japan: Math.max(5, Math.round(kpValue * 15 - 30)),
             scotland: Math.max(10, Math.round(kpValue * 15 - 20)),
             newZealand: Math.max(5, Math.round(kpValue * 15 - 35))
         };
