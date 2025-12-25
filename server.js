@@ -570,134 +570,60 @@ async function fetchWeather(lat, lon) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SpaceX / 火箭發射追蹤 (使用 RocketLaunch.Live API)
+// 火箭發射資訊 (靜態資料 + 官網連結)
 // ═══════════════════════════════════════════════════════════════════════════
-async function fetchSpaceXLaunches() {
-    try {
-        // 嘗試 SpaceX API v4
-        const res = await fetch('https://api.spacexdata.com/v4/launches/upcoming', {
-            timeout: 5000
-        });
-        
-        if (res.ok) {
-            const data = await res.json();
-            if (data && data.length > 0) {
-                return data.slice(0, 5).map(launch => ({
-                    name: launch.name,
-                    date: launch.date_utc,
-                    dateLocal: new Date(launch.date_utc).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
-                    rocket: launch.rocket,
-                    details: launch.details || '詳情待公布',
-                    upcoming: true
-                }));
-            }
-        }
-    } catch (e) {
-        console.log('SpaceX API v4 錯誤:', e.message);
-    }
 
-    // 備用：返回近期已知的發射計畫
-    return getKnownUpcomingLaunches();
-}
-
-// 取得最近一次發射
-async function fetchNextSpaceXLaunch() {
-    try {
-        // 嘗試 SpaceX API v4
-        const res = await fetch('https://api.spacexdata.com/v4/launches/next', {
-            timeout: 5000
-        });
-        
-        if (res.ok) {
-            const data = await res.json();
-            if (data && data.date_utc) {
-                const launchDate = new Date(data.date_utc);
-                const now = new Date();
-                const diff = launchDate - now;
-                
-                let countdown = '';
-                if (diff > 0) {
-                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    countdown = `${days}天 ${hours}時 ${mins}分`;
-                }
-                
-                return {
-                    name: data.name,
-                    date: data.date_utc,
-                    dateLocal: launchDate.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
-                    countdown,
-                    flightNumber: data.flight_number,
-                    details: data.details || '詳情待公布'
-                };
-            }
-        }
-    } catch (e) {
-        console.log('SpaceX Next Launch API 錯誤:', e.message);
-    }
-
-    // 備用：返回已知的下次發射
-    const launches = getKnownUpcomingLaunches();
-    if (launches.length > 0) {
-        const next = launches[0];
-        const launchDate = new Date(next.date);
-        const now = new Date();
-        const diff = launchDate - now;
-        
-        let countdown = '即將公布';
-        if (diff > 0) {
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            countdown = `約 ${days}天 ${hours}時`;
-        }
-        
-        return {
-            ...next,
-            countdown,
-            flightNumber: '-'
-        };
-    }
-    
-    return null;
-}
-
-// 已知的近期發射計畫 (手動更新或從可靠來源)
-function getKnownUpcomingLaunches() {
-    // 2025 年預計發射 - 這些是大致的計畫
+// 取得近期發射計畫 - 每月手動更新或導向官網
+function getUpcomingLaunches() {
     const now = new Date();
+    
+    // 2025 年底 ~ 2026 年初 的已知發射計畫
+    // 這些是大致計畫，實際時間請查看官網
     const launches = [
         {
-            name: 'Starlink Group 12-15',
-            date: '2025-12-28T00:00:00Z',
-            dateLocal: '2025/12/28',
-            details: 'SpaceX Starlink 衛星發射任務',
-            provider: 'SpaceX'
+            name: 'Starlink Group 衛星發射',
+            dateLocal: '每週都有發射',
+            details: 'SpaceX 星鏈衛星，幾乎每週發射',
+            provider: 'SpaceX',
+            status: '🟢 持續進行'
         },
         {
-            name: 'Starship Flight 8',
-            date: '2025-01-15T00:00:00Z',
-            dateLocal: '2025/01/15（暫定）',
-            details: 'SpaceX 星艦第 8 次試飛',
-            provider: 'SpaceX'
+            name: 'Starship Flight 8+',
+            dateLocal: '2025 年持續測試',
+            details: '星艦軌道測試，預計多次試飛',
+            provider: 'SpaceX',
+            status: '🟡 待定'
         },
         {
-            name: 'Crew Dragon Crew-10',
-            date: '2025-02-01T00:00:00Z',
-            dateLocal: '2025/02（暫定）',
-            details: 'NASA 商業載人任務',
-            provider: 'SpaceX'
+            name: 'Crew-10 載人任務',
+            dateLocal: '2025 年 Q1',
+            details: 'NASA 國際太空站載人輪替',
+            provider: 'SpaceX',
+            status: '🟡 計畫中'
         },
         {
-            name: 'Artemis II',
-            date: '2025-09-01T00:00:00Z',
-            dateLocal: '2025/09（暫定）',
-            details: 'NASA 重返月球載人任務',
-            provider: 'NASA/SpaceX'
+            name: 'Artemis II 繞月',
+            dateLocal: '2025 年 9 月（暫定）',
+            details: 'NASA 重返月球載人飛行',
+            provider: 'NASA/SpaceX',
+            status: '🟡 計畫中'
+        },
+        {
+            name: '嫦娥七號',
+            dateLocal: '2026 年',
+            details: '中國月球南極探測',
+            provider: 'CNSA',
+            status: '🟡 計畫中'
         }
-    ].filter(l => new Date(l.date) > now);
+    ];
     
     return launches;
+}
+
+// 取得下一個重大發射
+function getNextMajorLaunch() {
+    const launches = getUpcomingLaunches();
+    return launches[0] || null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1562,53 +1488,45 @@ async function handleTextMessage(event) {
             await lineReply(replyToken, msg);
         }
     }
-    // 🛸 SpaceX / 火箭發射
+    // 🛸 火箭發射
     else if (text === 'spacex' || text === '發射' || text === '火箭') {
-        const next = await fetchNextSpaceXLaunch();
-        if (next) {
-            const msg = `🛸 即將發射
+        const launches = getUpcomingLaunches();
+        const next = launches[0];
+        
+        const msg = `🛸 太空發射資訊
 ━━━━━━━━━━━━━━━━
 
-🚀 任務：${next.name}
-🏢 發射商：${next.provider || 'SpaceX'}
-📅 預計：${next.dateLocal}
-⏱️ 倒數：${next.countdown || '待確認'}
+🚀 ${next.name}
+🏢 ${next.provider}
+📅 ${next.dateLocal}
+${next.status}
 
 📝 ${next.details}
 
 ━━━━━━━━━━━━━━━━
-🔗 最新資訊：spacex.com
-💡 輸入「發射列表」查看更多`;
-            await lineReply(replyToken, msg);
-        } else {
-            await lineReply(replyToken, `🛸 火箭發射資訊
-
-目前無法取得即時發射資訊
-
-🔗 請查看官方網站：
-• spacex.com
+🔗 即時資訊請查看：
+• spacex.com/launches
 • nasa.gov/launches
+• nextspaceflight.com
 
-💡 輸入「月相」或「流星雨」查看其他資訊`);
-        }
+💡 輸入「發射列表」查看更多`;
+        await lineReply(replyToken, msg);
     }
     else if (text === '發射列表' || text === 'spacex列表') {
-        const launches = await fetchSpaceXLaunches();
-        if (launches.length > 0) {
-            let msg = '🛸 近期發射計畫\n━━━━━━━━━━━━━━━━\n\n';
-            for (const launch of launches) {
-                msg += `🚀 ${launch.name}\n`;
-                msg += `   📅 ${launch.dateLocal}\n`;
-                if (launch.provider) msg += `   🏢 ${launch.provider}\n`;
-                msg += '\n';
-            }
-            msg += '━━━━━━━━━━━━━━━━\n';
-            msg += '⚠️ 發射時間可能變動\n';
-            msg += '🔗 最新資訊：spacex.com';
-            await lineReply(replyToken, msg);
-        } else {
-            await lineReply(replyToken, '❌ 目前沒有即將發射的任務\n\n🔗 請查看 spacex.com 獲取最新資訊');
+        const launches = getUpcomingLaunches();
+        let msg = '🛸 太空發射計畫\n━━━━━━━━━━━━━━━━\n\n';
+        
+        for (const launch of launches) {
+            msg += `${launch.status} ${launch.name}\n`;
+            msg += `   🏢 ${launch.provider}\n`;
+            msg += `   📅 ${launch.dateLocal}\n\n`;
         }
+        
+        msg += '━━━━━━━━━━━━━━━━\n';
+        msg += '🔗 即時發射資訊：\n';
+        msg += '• nextspaceflight.com\n';
+        msg += '• spacex.com/launches';
+        await lineReply(replyToken, msg);
     }
     // 🌙 月相
     else if (text === '月亮' || text === '月相' || text === 'moon') {
@@ -2012,15 +1930,15 @@ app.get('/api/flares', async (req, res) => {
     res.json({ success: true, data: flares });
 });
 
-// SpaceX 發射
-app.get('/api/spacex', async (req, res) => {
-    const launches = await fetchSpaceXLaunches();
+// 火箭發射
+app.get('/api/spacex', (req, res) => {
+    const launches = getUpcomingLaunches();
     res.json({ success: true, data: launches });
 });
 
-// SpaceX 下一次發射
-app.get('/api/spacex/next', async (req, res) => {
-    const next = await fetchNextSpaceXLaunch();
+// 下一次發射
+app.get('/api/spacex/next', (req, res) => {
+    const next = getNextMajorLaunch();
     res.json({ success: true, data: next });
 });
 
