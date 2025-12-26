@@ -75,6 +75,9 @@ const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
 // NASA API
 const NASA_API_KEY = process.env.NASA_API_KEY || 'DEMO_KEY';
 
+// 管理 API 密鑰（保護廣播端點）
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
+
 // ═══════════════════════════════════════════════════════════════════════════
 // 全域變數
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2033,8 +2036,14 @@ app.get('/api/stats/subscriptions', async (req, res) => {
     }
 });
 
-// 手動推播（管理用）
+// 手動推播（管理用）- 需要 ADMIN_API_KEY
 app.post('/api/admin/broadcast', async (req, res) => {
+    // 驗證管理密鑰
+    const apiKey = req.headers['x-admin-key'];
+    if (!ADMIN_API_KEY || apiKey !== ADMIN_API_KEY) {
+        return res.status(403).json({ success: false, message: '無權限' });
+    }
+
     const { type, message } = req.body;
     
     if (!type || !message) {
@@ -2052,8 +2061,14 @@ app.post('/api/admin/broadcast', async (req, res) => {
     res.json({ success: true, sent, total: subscribers.length });
 });
 
-// 測試推播
+// 測試推播 - 需要 ADMIN_API_KEY
 app.post('/api/admin/test-push', async (req, res) => {
+    // 驗證管理密鑰
+    const apiKey = req.headers['x-admin-key'];
+    if (!ADMIN_API_KEY || apiKey !== ADMIN_API_KEY) {
+        return res.status(403).json({ success: false, message: '無權限' });
+    }
+
     const { userId, type = 'space-weather' } = req.body;
     
     if (!userId) {
