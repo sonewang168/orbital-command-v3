@@ -1260,6 +1260,23 @@
                 </div>
             </div>
             
+            <!-- Admin API Key -->
+            <div class="panel" style="margin-bottom: 20px; border-color: rgba(255, 200, 0, 0.3);">
+                <div class="panel-header" style="background: rgba(255, 200, 0, 0.1);">
+                    <span class="panel-title">
+                        <span class="panel-title-icon">🔑</span>
+                        管理員密鑰
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Admin API Key（在 Render 環境變數設定）</label>
+                        <input type="password" class="form-input" id="adminApiKey" placeholder="輸入您的 ADMIN_API_KEY">
+                        <small style="color: #888; margin-top: 5px; display: block;">此密鑰用於保護廣播功能，防止未授權的推播</small>
+                    </div>
+                </div>
+            </div>
+            
             <div class="grid-2">
                 <!-- 測試推播 -->
                 <div class="panel">
@@ -1828,6 +1845,12 @@
         async function sendTestPush() {
             const userId = document.getElementById('testUserId').value;
             const type = document.getElementById('testMsgType').value;
+            const apiKey = document.getElementById('adminApiKey').value;
+            
+            if (!apiKey) {
+                showToast('請輸入管理員密鑰', 'warning');
+                return;
+            }
             
             if (!userId) {
                 showToast('請輸入用戶 ID', 'warning');
@@ -1837,7 +1860,10 @@
             try {
                 const res = await fetch('/api/admin/test-push', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Admin-Key': apiKey
+                    },
                     body: JSON.stringify({ userId, type })
                 });
                 const data = await res.json();
@@ -1855,6 +1881,12 @@
         async function sendBroadcast() {
             const type = document.getElementById('broadcastType').value;
             const message = document.getElementById('broadcastMsg').value;
+            const apiKey = document.getElementById('adminApiKey').value;
+            
+            if (!apiKey) {
+                showToast('請輸入管理員密鑰', 'warning');
+                return;
+            }
             
             if (!message) {
                 showToast('請輸入訊息內容', 'warning');
@@ -1866,7 +1898,10 @@
             try {
                 const res = await fetch('/api/admin/broadcast', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Admin-Key': apiKey
+                    },
                     body: JSON.stringify({ type, message })
                 });
                 const data = await res.json();
@@ -1874,7 +1909,7 @@
                 if (data.success) {
                     showToast(`已發送給 ${data.sent}/${data.total} 位用戶`, 'success');
                 } else {
-                    showToast('廣播失敗', 'error');
+                    showToast('廣播失敗: ' + data.message, 'error');
                 }
             } catch (e) {
                 showToast('廣播錯誤', 'error');
