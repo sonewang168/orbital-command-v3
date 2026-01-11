@@ -97,6 +97,10 @@ let lastAlerts = {
     radiation: 0
 };
 
+// 防止 LINE Webhook 重試造成重複處理
+const processedMessages = new Map();
+const MESSAGE_EXPIRE_TIME = 30 * 1000; // 30 秒後過期
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Google Sheets 初始化
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1448,6 +1452,22 @@ app.post('/webhook', async (req, res) => {
     for (const event of events) {
         try {
             if (event.type === 'message' && event.message.type === 'text') {
+                // 防重複處理
+                const msgId = event.message.id;
+                if (processedMessages.has(msgId)) {
+                    console.log(`⏭️ [LINE] 跳過重複訊息: ${msgId}`);
+                    continue;
+                }
+                processedMessages.set(msgId, Date.now());
+                
+                // 清理過期的訊息記錄
+                const now = Date.now();
+                for (const [id, time] of processedMessages) {
+                    if (now - time > MESSAGE_EXPIRE_TIME) {
+                        processedMessages.delete(id);
+                    }
+                }
+                
                 console.log(`💬 [LINE] 用戶訊息: "${event.message.text}"`);
                 await handleTextMessage(event);
             } else if (event.type === 'follow') {
@@ -2439,11 +2459,19 @@ async function handleRichMenuCommand(event, text) {
     // ═══════════════════════════════════════════════════════════════════
     // 3️⃣ ISS 國際太空站
     // ═══════════════════════════════════════════════════════════════════
-    if (cmdLower === 'iss' || cmd === '太空站' || cmd === '國際太空站') {
+    if (cmdLower === 'iss' || cmd.includes('太空站') || cmd.includes('國際太空站')) {
         let lat = 0, lon = 0, location = '計算中...';
         
         try {
-            const res = await fetch('http://api.open-notify.org/iss-now.json');
+            // 設定 5 秒超時
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5000);
+            
+            const res = await fetch('http://api.open-notify.org/iss-now.json', {
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+            
             const data = await res.json();
             lat = parseFloat(data.iss_position.latitude);
             lon = parseFloat(data.iss_position.longitude);
@@ -2537,7 +2565,15 @@ async function handleRichMenuCommand(event, text) {
         try {
             const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             const apiKey = process.env.NASA_API_KEY || 'DEMO_KEY';
-            const res = await fetch(`https://api.nasa.gov/DONKI/CME?startDate=${startDate}&api_key=${apiKey}`);
+            
+            // 設定 8 秒超時
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            
+            const res = await fetch(`https://api.nasa.gov/DONKI/CME?startDate=${startDate}&api_key=${apiKey}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
             const data = await res.json();
             events = (data || []).slice(0, 3).map(cme => ({
                 time: cme.startTime?.substring(0, 16).replace('T', ' ') || '未知',
