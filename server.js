@@ -2300,8 +2300,16 @@ async function handleRichMenuCommand(event, text) {
     // 1️⃣ 極光
     // ═══════════════════════════════════════════════════════════════════
     if (cmd === '極光' || cmd === '極光預報' || cmdLower === 'aurora') {
-        const data = await getSpaceWeather();
-        const kp = data?.kpIndex || 3;
+        let kp = 3;
+        try {
+            const data = await Promise.race([
+                getSpaceWeather(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+            ]);
+            kp = data?.kpIndex || 3;
+        } catch (e) {
+            console.log('極光 API 超時，使用預設值');
+        }
         
         const getProb = (base, kp) => Math.min(98, base + kp * 6);
         
@@ -2384,8 +2392,16 @@ async function handleRichMenuCommand(event, text) {
     // 2️⃣ 太陽風
     // ═══════════════════════════════════════════════════════════════════
     if (cmd === '太陽風' || cmdLower === 'solar' || cmdLower === 'solar wind') {
-        const data = await getSpaceWeather();
-        const sw = data?.solarWind || {};
+        let sw = {};
+        try {
+            const data = await Promise.race([
+                getSpaceWeather(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+            ]);
+            sw = data?.solarWind || {};
+        } catch (e) {
+            console.log('太陽風 API 超時，使用預設值');
+        }
         const speed = sw.speed || 425;
         const density = sw.density || 4.2;
         const bz = sw.bz || -2.1;
@@ -2460,12 +2476,15 @@ async function handleRichMenuCommand(event, text) {
     // 3️⃣ ISS 國際太空站
     // ═══════════════════════════════════════════════════════════════════
     if (cmdLower === 'iss' || cmd.includes('太空站') || cmd.includes('國際太空站')) {
-        let lat = 0, lon = 0, location = '計算中...';
+        let lat = 25.0 + Math.random() * 20 - 10;  // 模擬軌道
+        let lon = 121.0 + Math.random() * 100 - 50;
+        let location = '地球上空';
+        let isLive = false;
         
         try {
-            // 設定 5 秒超時
+            // 3 秒超時，失敗就用模擬值
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 5000);
+            const timeout = setTimeout(() => controller.abort(), 3000);
             
             const res = await fetch('http://api.open-notify.org/iss-now.json', {
                 signal: controller.signal
@@ -2475,6 +2494,7 @@ async function handleRichMenuCommand(event, text) {
             const data = await res.json();
             lat = parseFloat(data.iss_position.latitude);
             lon = parseFloat(data.iss_position.longitude);
+            isLive = true;
             
             // 位置判斷
             if (lat > 60) location = '北極圈附近';
@@ -2566,14 +2586,16 @@ async function handleRichMenuCommand(event, text) {
             const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             const apiKey = process.env.NASA_API_KEY || 'DEMO_KEY';
             
-            // 設定 8 秒超時
+            // 4 秒超時
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 8000);
+            const timeout = setTimeout(() => controller.abort(), 4000);
             
             const res = await fetch(`https://api.nasa.gov/DONKI/CME?startDate=${startDate}&api_key=${apiKey}`, {
                 signal: controller.signal
             });
             clearTimeout(timeout);
+            
+            if (!res.ok) throw new Error('API error');
             const data = await res.json();
             events = (data || []).slice(0, 3).map(cme => ({
                 time: cme.startTime?.substring(0, 16).replace('T', ' ') || '未知',
