@@ -1,0 +1,29 @@
+{
+  "name": "orbital-command",
+  "version": "3.0.0",
+  "description": "🛰️ 太空氣象指揮中心 - Space Weather Dashboard with LINE BOT",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "google-spreadsheet": "^4.1.1",
+    "google-auth-library": "^9.4.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Sone Wang",
+  "license": "MIT",
+  "keywords": [
+    "space-weather",
+    "aurora",
+    "kp-index",
+    "solar-wind",
+    "iss-tracker",
+    "line-bot"
+  ]
+}
