@@ -2567,7 +2567,7 @@ async function handleRichMenuCommand(event, text) {
                 footer: {
                     type: 'box', layout: 'vertical', paddingAll: '15px',
                     contents: [
-                        { type: 'button', action: { type: 'uri', label: '🗺️ NASA 即時追蹤', uri: 'https://spotthestation.nasa.gov/tracking_map.cfm' }, style: 'primary', color: '#00f5ff', height: 'sm' }
+                        { type: 'button', action: { type: 'uri', label: '🗺️ ISS 即時追蹤', uri: 'https://isstracker.pl/en' }, style: 'primary', color: '#00f5ff', height: 'sm' }
                     ]
                 }
             }
