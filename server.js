@@ -2133,6 +2133,15 @@ app.post('/api/admin/test-push', async (req, res) => {
     res.json({ success, message: success ? '已發送' : '發送失敗' });
 });
 
+// 除錯：檢查 ADMIN_API_KEY 是否設定
+app.get('/debug-admin-key', (req, res) => {
+    res.json({
+        hasAdminKey: !!ADMIN_API_KEY,
+        keyLength: ADMIN_API_KEY ? ADMIN_API_KEY.length : 0,
+        keyPreview: ADMIN_API_KEY ? ADMIN_API_KEY.substring(0, 3) + '***' : 'NOT SET'
+    });
+});
+
 // 健康檢查
 app.get('/health', (req, res) => {
     res.json({
